@@ -40,33 +40,29 @@ dev-repo: "git+https://github.com/reuna-labs/ocaml-cardano.git"
 # additions in the Reuna fork and are not yet upstream. This block lets a
 # standalone `opam install --deps-only .` resolve them.
 #
-# Inside the shared `reuna-5.5` switch these pins are already present, on the
-# same branch -- see docs/switch.md. Do NOT copy ocaml-bitcoin's block, which
-# names the frozen sha 6af5932: reuna-5.5 tracks toolchain/ocaml-5.5, a strict
-# descendant, and pinning a different revision fights the shared switch.
-#
-# A branch rather than a sha, deliberately and unlike our siblings: this
-# repository has to stay in step with the switch nethsm also builds in, and a
-# frozen sha here would drift out of it silently.
+# The release branch is shared with the other web3 packages so every package
+# in the Mirage-crypto family resolves to one tested source revision. The
+# private pin is removed from the opam-repository submission after that
+# prerequisite has a public archive and versioned package metadata.
 pin-depends: [
   [
     "mirage-crypto.dev"
-    "git+https://github.com/reuna-labs/mirage-crypto.git#toolchain/ocaml-5.5"
+    "git+https://github.com/reuna-labs/mirage-crypto.git#release/web3-2.4.0-reuna1"
   ]
   [
     "mirage-crypto-rng.dev"
-    "git+https://github.com/reuna-labs/mirage-crypto.git#toolchain/ocaml-5.5"
+    "git+https://github.com/reuna-labs/mirage-crypto.git#release/web3-2.4.0-reuna1"
   ]
   [
     "mirage-crypto-ec.dev"
-    "git+https://github.com/reuna-labs/mirage-crypto.git#toolchain/ocaml-5.5"
+    "git+https://github.com/reuna-labs/mirage-crypto.git#release/web3-2.4.0-reuna1"
   ]
   [
     "mirage-crypto-blockchain-core.dev"
-    "git+https://github.com/reuna-labs/mirage-crypto.git#toolchain/ocaml-5.5"
+    "git+https://github.com/reuna-labs/mirage-crypto.git#release/web3-2.4.0-reuna1"
   ]
   [
     "digestif.dev"
-    "git+https://github.com/reuna-labs/digestif.git#toolchain/ocaml-5.5"
+    "git+https://github.com/reuna-labs/digestif.git#release/1.4.0-alpha1"
   ]
 ]

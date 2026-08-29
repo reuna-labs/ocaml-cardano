@@ -45,8 +45,8 @@ jobs:
       - name: Pin the private prerequisite wave
         if: steps.creds.outputs.ok == 'true'
         run: |
-          M=git+https://github.com/reuna-labs/mirage-crypto.git#release/web3-2.4.1-alpha1
-          C=git+https://github.com/reuna-labs/ocaml-web3-codec.git#feat/multiformats
+          M=git+https://github.com/reuna-labs/mirage-crypto.git#release/web3-2.4.0-reuna1
+          C=git+https://github.com/reuna-labs/ocaml-web3-codec.git#main
           opam pin add -yn mirage-crypto.dev "$M"
           opam pin add -yn mirage-crypto-ec.dev "$M"
           opam pin add -yn mirage-crypto-blockchain-core.dev "$M"
