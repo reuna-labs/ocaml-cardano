@@ -1,0 +1,13 @@
+_build/
+_opam/
+*.install
+.merlin
+*.swp
+.DS_Store
+node_modules/
+unikernel/dist/
+unikernel/duniverse/
+unikernel/Makefile
+unikernel/dune-workspace
+conformance/cli/out/
+validation/solo5/dist/

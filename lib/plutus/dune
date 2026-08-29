@@ -1,0 +1,4 @@
+(library
+ (name cardano_plutus)
+ (public_name cardano-plutus)
+ (libraries cardano-types web3-codec-cbor))

@@ -1,0 +1,72 @@
+name: test
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        ocaml-compiler: ["4.14.2", "5.2.1"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Are the private prerequisites reachable?
+        id: creds
+        env:
+          TOKEN: ${{ secrets.REUNA_CI_TOKEN }}
+        run: |
+          if [ -n "$TOKEN" ]; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Build skipped::REUNA_CI_TOKEN is not configured"
+          fi
+
+      - name: Let git reach private Reuna repositories
+        if: steps.creds.outputs.ok == 'true'
+        env:
+          TOKEN: ${{ secrets.REUNA_CI_TOKEN }}
+        run: |
+          git config --global \
+            url."https://x-access-token:${TOKEN}@github.com/".insteadOf \
+            "https://github.com/"
+
+      - uses: ocaml/setup-ocaml@v3
+        if: steps.creds.outputs.ok == 'true'
+        with:
+          ocaml-compiler: ${{ matrix.ocaml-compiler }}
+          opam-local-packages: "*.opam"
+
+      - name: Pin the private prerequisite wave
+        if: steps.creds.outputs.ok == 'true'
+        run: |
+          M=git+https://github.com/reuna-labs/mirage-crypto.git#release/web3-2.4.1-alpha1
+          C=git+https://github.com/reuna-labs/ocaml-web3-codec.git#feat/multiformats
+          opam pin add -yn mirage-crypto.dev "$M"
+          opam pin add -yn mirage-crypto-ec.dev "$M"
+          opam pin add -yn mirage-crypto-blockchain-core.dev "$M"
+          opam pin add -yn web3-codec-basen.dev "$C"
+          opam pin add -yn web3-codec-base58.dev "$C"
+          opam pin add -yn web3-codec-cbor.dev "$C"
+
+      - if: steps.creds.outputs.ok == 'true'
+        run: opam install -y --deps-only --with-test .
+
+      - if: steps.creds.outputs.ok == 'true'
+        run: opam exec -- dune build @install
+
+      - if: steps.creds.outputs.ok == 'true'
+        run: opam exec -- dune runtest
+
+      - name: Keep the offline package boundary intact
+        if: steps.creds.outputs.ok == 'true'
+        run: opam exec -- ./test/no_io_guard.sh
+
+      - name: Formatting
+        if: steps.creds.outputs.ok == 'true'
+        run: opam exec -- dune build @fmt

@@ -1,0 +1,18 @@
+(vendored_dirs duniverse)
+
+; Only in the cross context: the link flags name a Solo5 ABI, which the host
+; linker knows nothing about.
+;
+; -z solo5-abi=sptmac must reach the cc wrapper as two plain arguments, so it
+; goes through -ccopt (the compiler driver) rather than -cclib (the linker) and
+; is not wrapped in -Wl,. Get this wrong and the wrapper never sees it, silently
+; falls back to the stub bindings, and the binary links but carries no ABI note
+; -- which solo5-elftool then rejects with "note does not fall within valid
+; size". It looks like a linker-script bug and is a flag-plumbing one.
+(executable
+ (name unikernel)
+ (modules unikernel)
+ (libraries cardano-types cardano-address cardano-crypto cardano-transaction)
+ (enabled_if (= %{context_name} "default.solo5"))
+ (foreign_stubs (language c) (names shim manifest mirage_mm mirage_clock) (flags -I/Users/gilbahat/.opam/reuna-5.5/include/solo5 -I/Users/gilbahat/.opam/reuna-5.5/lib/ocaml-solo5/lib/ocaml))
+ (link_flags (-ccopt -z -ccopt solo5-abi=sptmac)))

@@ -1,0 +1,4 @@
+(library
+ (name cardano_crypto)
+ (public_name cardano-crypto)
+ (libraries cardano-types digestif mirage-crypto-ec mirage-crypto-blockchain-core))

@@ -1,0 +1,4 @@
+(library
+ (name cardano_transaction)
+ (public_name cardano-transaction)
+ (libraries cardano-types cardano-address cardano-crypto web3-codec-cbor))

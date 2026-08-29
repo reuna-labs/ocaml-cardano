@@ -1,0 +1,19 @@
+; Only in the cross context: the link flags name a Solo5 ABI, which the host
+; linker knows nothing about. -z solo5-abi=sptmac must reach the cc wrapper as
+; two plain arguments, hence -ccopt rather than -cclib or -Wl,.
+(executable
+ (name unikernel)
+ (modules unikernel)
+ (enabled_if (= %{system} none))
+ (libraries
+  cardano-types cardano-address cardano-crypto cardano-transaction
+  cardano-rpc cardano-rpc-flow
+  mirage-vsock-solo5 mirage-solo5 lwt
+  ; mirage-sleep is virtual and defaults to its Unix implementation. Naming the
+  ; solo5 one is not optional: without it the link pulls lwt.unix and fails on a
+  ; target that has no Unix at all.
+  mirage-sleep.solo5)
+ (foreign_stubs (language c) (names shim manifest)
+  (flags -I/Users/gilbahat/.opam/reuna-5.5/include/solo5
+         -I/Users/gilbahat/.opam/reuna-5.5/lib/ocaml-solo5/lib/ocaml))
+ (link_flags (-ccopt -z -ccopt solo5-abi=sptmac)))

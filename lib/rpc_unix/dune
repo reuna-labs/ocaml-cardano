@@ -1,0 +1,4 @@
+(library
+ (name cardano_rpc_unix)
+ (public_name cardano-rpc-unix)
+ (libraries cardano-rpc cardano-rpc-flow mirage-flow-unix unix lwt lwt.unix))

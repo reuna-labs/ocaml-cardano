@@ -1,0 +1,61 @@
+(test
+ (name test_cardano)
+ (modules test_cardano)
+ (package cardano-types)
+ (libraries cardano-types cardano-crypto alcotest))
+
+(test
+ (name test_address)
+ (modules test_address)
+ (package cardano-address)
+ (libraries cardano-types cardano-address alcotest))
+
+(test
+ (name test_transaction)
+ (modules test_transaction)
+ (package cardano-transaction)
+ (libraries cardano-types cardano-address cardano-crypto cardano-transaction web3-codec-cbor alcotest))
+
+(test
+ (name test_mainnet)
+ (modules test_mainnet)
+ (package cardano-transaction)
+ (deps ../conformance/fixtures/mainnet-txs.json)
+ (libraries cardano-types cardano-transaction web3-codec-cbor alcotest))
+
+(test
+ (name test_fee)
+ (modules test_fee)
+ (package cardano-transaction)
+ (libraries cardano-types cardano-address cardano-transaction web3-codec-cbor alcotest))
+
+(test
+ (name test_rpc)
+ (modules test_rpc)
+ (package cardano-rpc)
+ (deps ../conformance/fixtures/ogmios-protocol-parameters.json)
+ (libraries cardano-types cardano-rpc yojson alcotest))
+
+(test
+ (name test_submission)
+ (modules test_submission)
+ (package cardano-rpc)
+ (libraries cardano-types cardano-transaction cardano-rpc yojson alcotest))
+
+(test
+ (name test_http)
+ (modules test_http)
+ (package cardano-rpc-flow)
+ (libraries cardano-rpc-flow alcotest))
+
+(test
+ (name test_flow_client)
+ (modules test_flow_client)
+ (package cardano)
+ (libraries cardano cardano-rpc cardano-rpc-flow cstruct fmt mirage-flow lwt lwt.unix alcotest))
+
+(test
+ (name test_plutus)
+ (modules test_plutus)
+ (package cardano-plutus)
+ (libraries cardano-types cardano-plutus web3-codec-cbor alcotest))

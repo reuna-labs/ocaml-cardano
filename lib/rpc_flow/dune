@@ -1,0 +1,4 @@
+(library
+ (name cardano_rpc_flow)
+ (public_name cardano-rpc-flow)
+ (libraries cardano-rpc mirage-flow cstruct lwt fmt))

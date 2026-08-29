@@ -1,0 +1,4 @@
+(library
+ (name cardano_plutus_vm)
+ (public_name cardano-plutus-vm)
+ (libraries cardano-types cardano-plutus))

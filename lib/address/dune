@@ -1,0 +1,4 @@
+(library
+ (name cardano_address)
+ (public_name cardano-address)
+ (libraries cardano-types))

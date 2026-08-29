@@ -1,0 +1,7 @@
+{
+  "type": "solo5.manifest",
+  "version": 2,
+  "devices": [
+    { "name": "vsock0", "type": "VSOCK_BASIC" }
+  ]
+}

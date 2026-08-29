@@ -1,0 +1,4 @@
+(library
+ (name cardano_rpc)
+ (public_name cardano-rpc)
+ (libraries cardano-types cardano-address cardano-transaction yojson))

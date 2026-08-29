@@ -1,0 +1,8 @@
+; These hold data and prose, not buildable content: dune should copy them into
+; the build tree so tests can depend on the fixtures, but not look for dune
+; files inside them.
+(data_only_dirs conformance spec docs)
+
+(env
+ (dev
+  (flags (:standard -w @a-4-40-42-44-45-48-66-70))))
