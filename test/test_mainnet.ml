@@ -14,8 +14,9 @@ module B = Cardano_transaction.Body
 module T = Cardano_types
 
 let unhex s =
-  String.init (String.length s / 2) (fun i ->
-      Char.chr (int_of_string ("0x" ^ String.sub s (i * 2) 2)))
+  String.init
+    (String.length s / 2)
+    (fun i -> Char.chr (int_of_string ("0x" ^ String.sub s (i * 2) 2)))
 
 (* A deliberately small reader for a deliberately small file: the fixture is a
    flat array of two-string objects, and pulling in a JSON library for it would
@@ -23,7 +24,11 @@ let unhex s =
 let string_field name s =
   let key = "\"" ^ name ^ "\"" in
   let klen = String.length key and slen = String.length s in
-  let rec skip_ws p = if p < slen && (s.[p] = ' ' || s.[p] = ':' || s.[p] = '\n' || s.[p] = '\t') then skip_ws (p + 1) else p in
+  let rec skip_ws p =
+    if p < slen && (s.[p] = ' ' || s.[p] = ':' || s.[p] = '\n' || s.[p] = '\t')
+    then skip_ws (p + 1)
+    else p
+  in
   let rec go acc p =
     if p + klen > slen then List.rev acc
     else if String.sub s p klen = key then
@@ -73,13 +78,19 @@ let bodies_decode () =
       | Error m -> Alcotest.failf "%s: %s" h m
       | Ok tx ->
           let b = tx.Tx.body in
-          Alcotest.(check bool) ("has inputs: " ^ String.sub h 0 12) true
+          Alcotest.(check bool)
+            ("has inputs: " ^ String.sub h 0 12)
+            true
             (List.length b.B.inputs > 0);
-          Alcotest.(check bool) ("has outputs: " ^ String.sub h 0 12) true
+          Alcotest.(check bool)
+            ("has outputs: " ^ String.sub h 0 12)
+            true
             (List.length b.B.outputs > 0);
           (* A real transaction pays a real fee. Zero would mean we read the
              wrong field. *)
-          Alcotest.(check bool) ("pays a fee: " ^ String.sub h 0 12) true
+          Alcotest.(check bool)
+            ("pays a fee: " ^ String.sub h 0 12)
+            true
             (T.Coin.compare b.B.fee T.Coin.zero > 0))
     fixtures
 
@@ -92,7 +103,7 @@ let re_encoding_differs () =
       (fun (_, cbor_hex) ->
         match Tx.of_cbor (unhex cbor_hex) with
         | Ok tx ->
-            let from_fields = B.to_cbor { (tx.Tx.body) with B.raw = None } in
+            let from_fields = B.to_cbor { tx.Tx.body with B.raw = None } in
             not (String.equal from_fields (B.to_cbor tx.Tx.body))
         | Error _ -> false)
       fixtures
@@ -101,8 +112,9 @@ let re_encoding_differs () =
     "at least one real transaction re-encodes differently from how it arrived"
     true
     (List.length differing > 0);
-  Format.printf "@[<v>  %d of %d mainnet transactions do not re-encode to their@,\
-                \  original bytes -- which is why Body keeps them.@]@."
+  Format.printf
+    "@[<v>  %d of %d mainnet transactions do not re-encode to their@,\
+    \  original bytes -- which is why Body keeps them.@]@."
     (List.length differing) (List.length fixtures)
 
 (* The realistic co-signing path: take a transaction off the chain, drop the
@@ -120,13 +132,15 @@ let re_encoding_preserves_id_and_witnesses () =
             ("id survives reassembly: " ^ String.sub h 0 12)
             h
             (T.Hash.Tx_id.to_hex (Tx.id reassembled));
-          let again = match Tx.of_cbor (Tx.to_cbor reassembled) with
+          let again =
+            match Tx.of_cbor (Tx.to_cbor reassembled) with
             | Ok x -> x
             | Error m -> Alcotest.failf "%s: re-decode failed: %s" h m
           in
           Alcotest.(check string)
             ("and again after a full round trip: " ^ String.sub h 0 12)
-            h (T.Hash.Tx_id.to_hex (Tx.id again));
+            h
+            (T.Hash.Tx_id.to_hex (Tx.id again));
           Alcotest.(check int)
             ("key witnesses survive: " ^ String.sub h 0 12)
             (List.length (Tx.witnesses tx))
@@ -138,15 +152,20 @@ let re_encoding_preserves_id_and_witnesses () =
           Alcotest.(check bool)
             ("the witnesses still verify: " ^ String.sub h 0 12)
             true
-            (List.for_all (fun w -> W.Vkey.verify w (Tx.id again))
+            (List.for_all
+               (fun w -> W.Vkey.verify w (Tx.id again))
                (Tx.witnesses again)))
     fixtures
 
 let () =
   Alcotest.run "cardano-mainnet"
-    [ ("conformance",
-       [ Alcotest.test_case "ids match the chain" `Quick ids_match_the_chain;
-         Alcotest.test_case "bodies decode" `Quick bodies_decode;
-         Alcotest.test_case "re-encoding differs" `Quick re_encoding_differs;
-         Alcotest.test_case "reassembly preserves id and witnesses" `Quick
-           re_encoding_preserves_id_and_witnesses ]) ]
+    [
+      ( "conformance",
+        [
+          Alcotest.test_case "ids match the chain" `Quick ids_match_the_chain;
+          Alcotest.test_case "bodies decode" `Quick bodies_decode;
+          Alcotest.test_case "re-encoding differs" `Quick re_encoding_differs;
+          Alcotest.test_case "reassembly preserves id and witnesses" `Quick
+            re_encoding_preserves_id_and_witnesses;
+        ] );
+    ]

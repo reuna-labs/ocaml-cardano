@@ -15,7 +15,10 @@ module type S = sig
   val bind : 'a io -> ('a -> 'b io) -> 'b io
 
   val request :
-    t -> method_:string -> params:Yojson.Safe.t option -> id:int ->
+    t ->
+    method_:string ->
+    params:Yojson.Safe.t option ->
+    id:int ->
     (Yojson.Safe.t, Error.t) result io
 end
 
@@ -35,9 +38,9 @@ module Make (P : S) : sig
   val call : P.t -> 'a Method.t -> ('a, Error.t) result P.io
 end
 
-module Of_text (X : TEXT) : S with type t = X.t and type 'a io = 'a X.io
 (** Builds a provider from anything that can exchange a string for a string.
 
     Request ids are assigned per exchange and checked on the way back, so a
     transport that mixes up two in-flight replies is caught rather than
     believed. *)
+module Of_text (X : TEXT) : S with type t = X.t and type 'a io = 'a X.io

@@ -5,15 +5,17 @@
     rounding error, so the type refuses to let it happen quietly.
 
     Values are constrained to [[0, max_supply]]. Ada has no negative amounts;
-    where a difference can go either way, compute it with {!diff}, which
-    reports the sign separately rather than introducing a signed type. *)
+    where a difference can go either way, compute it with {!diff}, which reports
+    the sign separately rather than introducing a signed type. *)
 
 type t = private int64
 
 type error =
-  [ `Overflow of string  (** The named operation left the representable range. *)
+  [ `Overflow of string
+    (** The named operation left the representable range. *)
   | `Invalid_range  (** Negative, or above {!max_supply}. *)
-  | `Invalid_format  (** A decimal figure this type cannot represent exactly. *) ]
+  | `Invalid_format  (** A decimal figure this type cannot represent exactly. *)
+  ]
 
 val pp_error : Format.formatter -> [< error ] -> unit
 val zero : t

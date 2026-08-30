@@ -1,4 +1,10 @@
 (library
  (name cardano)
  (public_name cardano)
- (libraries cardano-types cardano-address cardano-crypto cardano-plutus cardano-transaction cardano-rpc))
+ (libraries
+  cardano-types
+  cardano-address
+  cardano-crypto
+  cardano-plutus
+  cardano-transaction
+  cardano-rpc))

@@ -8,10 +8,10 @@
     way ada does, so a quantity genuinely can exceed [Int64.max_int]. Treating
     the bit pattern as signed would turn a large balance into a negative one.
 
-    {b Minting is not a value.} A mint field carries signed
-    [nonzero_int64] -- negative means burn -- while an output carries strictly
-    positive quantities. They are separate types, so a burn cannot be added to
-    an output by mistake. *)
+    {b Minting is not a value.} A mint field carries signed [nonzero_int64] --
+    negative means burn -- while an output carries strictly positive quantities.
+    They are separate types, so a burn cannot be added to an output by mistake.
+*)
 
 (** {1 Asset identity} *)
 
@@ -21,7 +21,6 @@ module Asset_name : sig
   val max_length : int
 
   (** [32]. *)
-
 
   val of_bytes : string -> (t, string) result
   (** Any byte string of 0..32 bytes. Not text: an asset name is opaque bytes
@@ -47,6 +46,7 @@ type policy_id = Hash.Script_hash.t
 type asset = { policy : policy_id; name : Asset_name.t }
 
 val asset : policy_id -> Asset_name.t -> asset
+
 val compare_asset : asset -> asset -> int
 (** {1 Unsigned quantities} *)
 
@@ -57,12 +57,14 @@ module Quantity : sig
       therefore wrong on it, and the ones below are not. *)
 
   val one : t
+
   val of_int64_unsigned : int64 -> (t, string) result
   (** Rejects zero: an entry of zero is not representable in the CDDL, and
       silently keeping one would produce a bundle that cannot be encoded. *)
 
   val of_int : int -> (t, string) result
   val to_int64_unsigned : t -> int64
+
   val to_string : t -> string
   (** Decimal, unsigned. *)
 
@@ -70,6 +72,7 @@ module Quantity : sig
   (** [None] when it does not fit exactly. *)
 
   val add : t -> t -> (t, string) result
+
   val sub : t -> t -> (t, string) result
   (** Errors rather than reaching zero. *)
 
@@ -88,9 +91,9 @@ module Multi_asset : sig
 
   val empty : t
   val is_empty : t -> bool
+
   val of_list : (asset * Quantity.t) list -> (t, string) result
   (** Combines repeated assets by addition; errors if that overflows. *)
-
 
   val to_list : t -> (asset * Quantity.t) list
 
@@ -99,6 +102,7 @@ module Multi_asset : sig
   val find : t -> asset -> Quantity.t option
   val add : t -> t -> (t, string) result
   val policies : t -> policy_id list
+
   val size : t -> int
   (** Number of distinct assets. *)
 
@@ -126,7 +130,6 @@ module Value : sig
 
   (** [contains a b] is whether [a] covers [b] in ada and in every asset. *)
 
-
   val compare : t -> t -> int
   val equal : t -> t -> bool
   val pp : Format.formatter -> t -> unit
@@ -142,9 +145,9 @@ module Mint : sig
 
   val empty : t
   val is_empty : t -> bool
+
   val of_list : (asset * int64) list -> (t, string) result
   (** Rejects a zero delta, which the CDDL cannot represent. *)
-
 
   val to_list : t -> (asset * int64) list
   val size : t -> int

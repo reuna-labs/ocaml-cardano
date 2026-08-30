@@ -22,7 +22,8 @@ type config = {
 let config ?(max_rebuilds = 3) ?(max_confirmation_polls = 100)
     ?(confirmations = 1) () =
   if max_rebuilds < 0 then Error "max_rebuilds is negative"
-  else if max_confirmation_polls < 1 then Error "max_confirmation_polls is below one"
+  else if max_confirmation_polls < 1 then
+    Error "max_confirmation_polls is below one"
   else if confirmations < 1 then Error "confirmations is below one"
   else Ok { max_rebuilds; max_confirmation_polls; confirmations }
 
@@ -51,19 +52,22 @@ let pp_failure ppf = function
   | Rpc e -> Format.fprintf ppf "%a" Error.pp e
   | Rejected { code; message; data } ->
       Format.fprintf ppf "the ledger rejected it (%d): %s%s" code message
-        (match data with None -> "" | Some d -> " -- " ^ Yojson.Safe.to_string d)
+        (match data with
+        | None -> ""
+        | Some d -> " -- " ^ Yojson.Safe.to_string d)
   | Ttl_expired { ttl; tip } ->
       Format.fprintf ppf
-        "validity interval ended at slot %Ld and the tip is already at %Ld" ttl tip
+        "validity interval ended at slot %Ld and the tip is already at %Ld" ttl
+        tip
   | Rebuilds_exhausted n ->
       Format.fprintf ppf
         "execution budgets still had not settled after %d rebuild(s)" n
   | Confirmation_timeout n ->
       Format.fprintf ppf "gave up waiting after %d poll(s)" n
   | Id_disagreement { expected; reported } ->
-      Format.fprintf ppf
-        "the node reports it accepted %s, but we submitted %s"
-        (T.Hash.Tx_id.to_hex reported) (T.Hash.Tx_id.to_hex expected)
+      Format.fprintf ppf "the node reports it accepted %s, but we submitted %s"
+        (T.Hash.Tx_id.to_hex reported)
+        (T.Hash.Tx_id.to_hex expected)
   | Rolled_back_repeatedly n ->
       Format.fprintf ppf "rolled back %d time(s); not resubmitting again" n
 
@@ -107,8 +111,14 @@ type t = {
 
 let start cfg tx =
   {
-    cfg; tx; phase = Checking_ttl; rebuilds = 0; polls = 0; rollbacks = 0;
-    tip_height = 0L; last_budgets = None;
+    cfg;
+    tx;
+    phase = Checking_ttl;
+    rebuilds = 0;
+    polls = 0;
+    rollbacks = 0;
+    tip_height = 0L;
+    last_budgets = None;
   }
 
 let tx_id t = t.tx.tx_id
@@ -134,11 +144,13 @@ let same_budgets previous current =
   | None -> false
   | Some p ->
       let key (e : Ogmios.evaluation) =
-        (e.Ogmios.validator, e.Ogmios.budget.T.Protocol_params.mem,
-         e.Ogmios.budget.T.Protocol_params.steps)
+        ( e.Ogmios.validator,
+          e.Ogmios.budget.T.Protocol_params.mem,
+          e.Ogmios.budget.T.Protocol_params.steps )
       in
       let sort l = List.sort compare (List.map key l) in
       List.length p = List.length current && sort p = sort current
+
 let bad what = Error (Printf.sprintf "submission: %s" what)
 
 (* A transport failure is worth another go; anything else means the answer will
@@ -197,7 +209,12 @@ let advance t ev =
   | Awaiting_block, Unspent_inputs [] ->
       (* Every input we spend has left the UTXO set, so the transaction is in a
          block. Depth is counted from the tip we last saw. *)
-      Ok { t with phase = Awaiting_depth { accepted_at = t.tip_height }; polls = 0 }
+      Ok
+        {
+          t with
+          phase = Awaiting_depth { accepted_at = t.tip_height };
+          polls = 0;
+        }
   | Awaiting_block, Unspent_inputs _ ->
       if t.polls + 1 >= t.cfg.max_confirmation_polls then
         fail t (Confirmation_timeout (t.polls + 1))
@@ -206,8 +223,12 @@ let advance t ev =
   | Awaiting_depth { accepted_at }, Tip { height; _ } ->
       let depth = Int64.to_int (Int64.sub height accepted_at) + 1 in
       if depth >= t.cfg.confirmations then
-        Ok { t with tip_height = height;
-             phase = Done (Accepted { tx_id = t.tx.tx_id; depth }) }
+        Ok
+          {
+            t with
+            tip_height = height;
+            phase = Done (Accepted { tx_id = t.tx.tx_id; depth });
+          }
       else if t.polls + 1 >= t.cfg.max_confirmation_polls then
         fail t (Confirmation_timeout (t.polls + 1))
       else Ok { t with tip_height = height; polls = t.polls + 1 }
@@ -215,8 +236,10 @@ let advance t ev =
       (* The inputs are unspent again: the block holding this transaction was
          rolled back. It can be resubmitted -- the id has not changed -- but not
          indefinitely. *)
-      if t.rollbacks + 1 > 2 then fail t (Rolled_back_repeatedly (t.rollbacks + 1))
-      else Ok { t with rollbacks = t.rollbacks + 1; phase = Submitting; polls = 0 }
+      if t.rollbacks + 1 > 2 then
+        fail t (Rolled_back_repeatedly (t.rollbacks + 1))
+      else
+        Ok { t with rollbacks = t.rollbacks + 1; phase = Submitting; polls = 0 }
   | Awaiting_depth _, Unspent_inputs [] -> Ok t
   | _, Waited -> Ok { t with polls = t.polls + 1 }
   | Done _, _ -> Ok t
@@ -237,5 +260,6 @@ let pp ppf t =
     | Submitting -> "submitting"
     | Awaiting_block -> "awaiting a block"
     | Awaiting_depth _ -> "awaiting depth"
-    | Done (Accepted { depth; _ }) -> Printf.sprintf "accepted at depth %d" depth
+    | Done (Accepted { depth; _ }) ->
+        Printf.sprintf "accepted at depth %d" depth
     | Done (Failed f) -> Format.asprintf "failed: %a" pp_failure f)

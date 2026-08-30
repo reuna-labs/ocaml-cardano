@@ -36,18 +36,18 @@ type t =
   | Bytes of string
 
 val of_int : int -> t
+
 val max_definite_bytes : int
 (** [64]. Past this, a byte string must be chunked. *)
 
 val encode : t -> string
-(** The canonical encoding, chunking byte strings over
-    {!max_definite_bytes}. This is what gets hashed, so it is bytes rather than
-    a CBOR value: the chunked form is not something the strict codec would
-    emit. *)
+(** The canonical encoding, chunking byte strings over {!max_definite_bytes}.
+    This is what gets hashed, so it is bytes rather than a CBOR value: the
+    chunked form is not something the strict codec would emit. *)
 
 val decode : string -> (t, string) result
-(** Accepts both the chunked and, for short strings, the definite form.
-    Rejects a definite string over 64 bytes, which the ledger does not permit. *)
+(** Accepts both the chunked and, for short strings, the definite form. Rejects
+    a definite string over 64 bytes, which the ledger does not permit. *)
 
 val to_cbor : t -> Web3_codec_cbor.t
 (** For embedding in a larger structure. {b Not equivalent to {!encode}} when a

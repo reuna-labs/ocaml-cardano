@@ -71,8 +71,8 @@ type t =
   | Reward of { network : Cardano_types.Network.t; stake : Credential.t }
       (** Header [1110]-[1111]. A withdrawal target, never an output target. *)
   | Byron of string
-      (** Header [1000]. Carried as opaque bytes: recognised so that a
-          legacy address is not mistaken for a malformed Shelley one, but not
+      (** Header [1000]. Carried as opaque bytes: recognised so that a legacy
+          address is not mistaken for a malformed Shelley one, but not
           interpreted, and never constructed. *)
 
 val of_bytes : string -> (t, error) result
@@ -105,5 +105,5 @@ val to_string : t -> (string, error) result
     and this library does not construct them. *)
 
 val of_string : string -> (t, error) result
-(** Accepts bech32. A Byron address is base58 and is reported as
-    [`Not_bech32] rather than silently misparsed. *)
+(** Accepts bech32. A Byron address is base58 and is reported as [`Not_bech32]
+    rather than silently misparsed. *)

@@ -17,6 +17,7 @@ module type HASH = sig
   val to_bytes : t -> string
   val of_hex : string -> (t, string) result
   val to_hex : t -> string
+
   val digest : string -> t
   (** Blake2b of the given bytes at this width. *)
 
@@ -25,26 +26,26 @@ module type HASH = sig
   val pp : Format.formatter -> t -> unit
 end
 
-(** 28 bytes: Blake2b-224 of an Ed25519 public key. *)
 module Addr_key_hash : HASH
+(** 28 bytes: Blake2b-224 of an Ed25519 public key. *)
 
-(** 28 bytes, over the script with its language tag prefixed. *)
 module Script_hash : HASH
+(** 28 bytes, over the script with its language tag prefixed. *)
 
-(** 28 bytes. *)
 module Pool_key_hash : HASH
+(** 28 bytes. *)
 
-(** 32 bytes: Blake2b-256 over the exact bytes of the transaction body. *)
 module Tx_id : HASH
+(** 32 bytes: Blake2b-256 over the exact bytes of the transaction body. *)
 
-(** 32 bytes. *)
 module Datum_hash : HASH
-
 (** 32 bytes. *)
+
 module Aux_data_hash : HASH
-
 (** 32 bytes. *)
+
 module Script_data_hash : HASH
+(** 32 bytes. *)
 
 val blake2b224 : string -> string
 val blake2b256 : string -> string

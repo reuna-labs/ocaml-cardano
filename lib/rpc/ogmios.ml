@@ -10,7 +10,6 @@ module Tx = Cardano_transaction
 
 let ( let* ) = Result.bind
 let err fmt = Printf.ksprintf (fun s -> Error s) fmt
-
 let member k = function `Assoc kvs -> List.assoc_opt k kvs | _ -> None
 
 let req k j =
@@ -18,7 +17,10 @@ let req k j =
 
 let as_int64 = function
   | `Int n -> Ok (Int64.of_int n)
-  | `Intlit s -> ( match Int64.of_string_opt s with Some n -> Ok n | None -> err "integer out of range")
+  | `Intlit s -> (
+      match Int64.of_string_opt s with
+      | Some n -> Ok n
+      | None -> err "integer out of range")
   | j -> err "expected an integer, got %s" (Yojson.Safe.to_string j)
 
 let as_int j = Result.map Int64.to_int (as_int64 j)
@@ -30,12 +32,18 @@ let hex_to_bytes h =
   if n mod 2 <> 0 then err "odd-length hex"
   else
     try
-      Ok (String.init (n / 2) (fun i ->
-              Char.chr (int_of_string ("0x" ^ String.sub h (i * 2) 2))))
+      Ok
+        (String.init (n / 2) (fun i ->
+             Char.chr (int_of_string ("0x" ^ String.sub h (i * 2) 2))))
     with _ -> err "not hexadecimal"
 
 let map_r f l =
-  List.fold_left (fun acc x -> let* acc = acc in let* y = f x in Ok (y :: acc)) (Ok []) l
+  List.fold_left
+    (fun acc x ->
+      let* acc = acc in
+      let* y = f x in
+      Ok (y :: acc))
+    (Ok []) l
   |> Result.map List.rev
 
 (* ---- tip ---- *)
@@ -47,12 +55,12 @@ let ( >>= ) x f = Result.bind x f
 let tip_of_json j =
   let* slot = req "slot" j >>= as_int64 in
   let* id = match member "id" j with Some v -> as_string v | None -> Ok "" in
-  let* height = match member "height" j with Some v -> as_int64 v | None -> Ok 0L in
+  let* height =
+    match member "height" j with Some v -> as_int64 v | None -> Ok 0L
+  in
   Ok { slot; id; height }
 
-let query_network_tip () =
-  Method.make ~name:"queryNetwork/tip" tip_of_json
-
+let query_network_tip () = Method.make ~name:"queryNetwork/tip" tip_of_json
 let query_tip () = Method.make ~name:"queryLedgerState/tip" tip_of_json
 
 let query_network_start_time () =
@@ -91,19 +99,19 @@ let ratio_of_json j =
   match j with
   | `Float f -> number_as_ratio f
   | `Int n -> T.Rational.of_int64 (Int64.of_int n)
-  | _ ->
-  let* s = as_string j in
-  match String.index_opt s '/' with
-  | None -> (
-      match Int64.of_string_opt s with
-      | Some n -> T.Rational.of_int64 n
-      | None -> err "%S is not a ratio" s)
-  | Some i -> (
-      let n = String.sub s 0 i
-      and d = String.sub s (i + 1) (String.length s - i - 1) in
-      match (Int64.of_string_opt n, Int64.of_string_opt d) with
-      | Some n, Some d -> T.Rational.of_ratio n d
-      | _ -> err "%S is not a ratio" s)
+  | _ -> (
+      let* s = as_string j in
+      match String.index_opt s '/' with
+      | None -> (
+          match Int64.of_string_opt s with
+          | Some n -> T.Rational.of_int64 n
+          | None -> err "%S is not a ratio" s)
+      | Some i -> (
+          let n = String.sub s 0 i
+          and d = String.sub s (i + 1) (String.length s - i - 1) in
+          match (Int64.of_string_opt n, Int64.of_string_opt d) with
+          | Some n, Some d -> T.Rational.of_ratio n d
+          | _ -> err "%S is not a ratio" s))
 
 let lovelace_of_json j =
   match member "ada" j with
@@ -127,14 +135,18 @@ let protocol_parameters_of_json j =
   let* prices = req "scriptExecutionPrices" j in
   let* price_mem = req "memory" prices >>= ratio_of_json in
   let* price_steps = req "cpu" prices >>= ratio_of_json in
-  let* max_tx_ex_units = req "maxExecutionUnitsPerTransaction" j >>= ex_units_of_json in
+  let* max_tx_ex_units =
+    req "maxExecutionUnitsPerTransaction" j >>= ex_units_of_json
+  in
   let* collateral_percentage = req "collateralPercentage" j >>= as_int in
   let* max_collateral_inputs = req "maxCollateralInputs" j >>= as_int in
   (* Ogmios reports the tier width and growth factor next to the base rate.
      They are ledger constants rather than protocol parameters, but reading
      them beats assuming them: if the ledger ever changes one, a node that
      knows will tell us. *)
-  let* min_fee_ref_script_coins_per_byte, ref_script_range, ref_script_multiplier =
+  let* ( min_fee_ref_script_coins_per_byte,
+         ref_script_range,
+         ref_script_multiplier ) =
     match member "minFeeReferenceScripts" j with
     | None ->
         Ok (T.Rational.zero, 25_600, Result.get_ok (T.Rational.of_ratio 6L 5L))
@@ -151,13 +163,24 @@ let protocol_parameters_of_json j =
         Ok (base, range, mult)
   in
   Ok
-    { P.min_fee_a; min_fee_b; max_tx_size; coins_per_utxo_byte; price_mem;
-      price_steps; max_tx_ex_units; collateral_percentage;
-      max_collateral_inputs; min_fee_ref_script_coins_per_byte;
-      ref_script_range; ref_script_multiplier }
+    {
+      P.min_fee_a;
+      min_fee_b;
+      max_tx_size;
+      coins_per_utxo_byte;
+      price_mem;
+      price_steps;
+      max_tx_ex_units;
+      collateral_percentage;
+      max_collateral_inputs;
+      min_fee_ref_script_coins_per_byte;
+      ref_script_range;
+      ref_script_multiplier;
+    }
 
 let query_protocol_parameters () =
-  Method.make ~name:"queryLedgerState/protocolParameters" protocol_parameters_of_json
+  Method.make ~name:"queryLedgerState/protocolParameters"
+    protocol_parameters_of_json
 
 (* ---- utxo ---- *)
 
@@ -166,7 +189,8 @@ type utxo_entry = { input : Tx.Body.Input.t; output : Tx.Body.Output.t }
 let value_of_json j =
   let* coin = lovelace_of_json j in
   let* coin =
-    Result.map_error (fun e -> Format.asprintf "%a" T.Coin.pp_error e)
+    Result.map_error
+      (fun e -> Format.asprintf "%a" T.Coin.pp_error e)
       (T.Coin.of_lovelace coin)
   in
   let entries =
@@ -217,22 +241,32 @@ let utxo_decoder j = as_list j >>= map_r utxo_entry_of_json
 
 let query_utxo_by_address addresses =
   Method.make ~name:"queryLedgerState/utxo"
-    ~params:(`Assoc [ ("addresses", `List (List.map (fun a -> `String a) addresses)) ])
+    ~params:
+      (`Assoc [ ("addresses", `List (List.map (fun a -> `String a) addresses)) ])
     utxo_decoder
 
 let query_utxo_by_input inputs =
   Method.make ~name:"queryLedgerState/utxo"
     ~params:
       (`Assoc
-        [ ( "outputReferences",
-            `List
-              (List.map
-                 (fun (i : Tx.Body.Input.t) ->
-                   `Assoc
-                     [ ("transaction",
-                        `Assoc [ ("id", `String (T.Hash.Tx_id.to_hex i.Tx.Body.Input.tx_id)) ]);
-                       ("index", `Int i.Tx.Body.Input.index) ])
-                 inputs) ) ])
+         [
+           ( "outputReferences",
+             `List
+               (List.map
+                  (fun (i : Tx.Body.Input.t) ->
+                    `Assoc
+                      [
+                        ( "transaction",
+                          `Assoc
+                            [
+                              ( "id",
+                                `String
+                                  (T.Hash.Tx_id.to_hex i.Tx.Body.Input.tx_id) );
+                            ] );
+                        ("index", `Int i.Tx.Body.Input.index);
+                      ])
+                  inputs) );
+         ])
     utxo_decoder
 
 (* ---- evaluation and submission ---- *)

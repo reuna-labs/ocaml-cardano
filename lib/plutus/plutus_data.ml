@@ -41,8 +41,7 @@ let rec to_cbor = function
       let inner = C.Array (List.map to_cbor fields) in
       match tag_of_alternative alternative with
       | Some tag -> C.Tag (tag, inner)
-      | None ->
-          C.Tag (102, C.Array [ C.uint_of_int alternative; inner ]))
+      | None -> C.Tag (102, C.Array [ C.uint_of_int alternative; inner ]))
   | Map kvs -> C.Map (List.map (fun (k, v) -> (to_cbor k, to_cbor v)) kvs)
   | List xs -> C.Array (List.map to_cbor xs)
   | Int n ->
@@ -147,7 +146,10 @@ let rec of_value v =
 
 and seq xs =
   List.fold_left
-    (fun acc x -> let* acc = acc in let* y = of_value x in Ok (y :: acc))
+    (fun acc x ->
+      let* acc = acc in
+      let* y = of_value x in
+      Ok (y :: acc))
     (Ok []) xs
   |> Result.map List.rev
 
@@ -158,7 +160,9 @@ and be_of_uint n =
   Bytes.set_int64_be b 0 n;
   let s = Bytes.unsafe_to_string b in
   let i = ref 0 in
-  while !i < 7 && s.[!i] = '\000' do incr i done;
+  while !i < 7 && s.[!i] = '\000' do
+    incr i
+  done;
   String.sub s !i (8 - !i)
 
 (* Permissive, in the same spirit as the codec: a definite byte string over 64
@@ -184,25 +188,32 @@ let rec equal a b =
   | Map x, Map y -> List.equal (fun (a, b) (c, d) -> equal a c && equal b d) x y
   | List x, List y -> List.equal equal x y
   | Int x, Int y -> Int64.equal x y
-  | Big_int x, Big_int y -> x.negative = y.negative && String.equal x.magnitude y.magnitude
+  | Big_int x, Big_int y ->
+      x.negative = y.negative && String.equal x.magnitude y.magnitude
   | Bytes x, Bytes y -> String.equal x y
   | _ -> false
 
 let rec pp ppf = function
   | Constr { alternative; fields } ->
       Format.fprintf ppf "@[<hov 2>Constr %d [%a]@]" alternative
-        (Format.pp_print_list ~pp_sep:(fun f () -> Format.fprintf f ",@ ") pp) fields
+        (Format.pp_print_list ~pp_sep:(fun f () -> Format.fprintf f ",@ ") pp)
+        fields
   | Map kvs ->
       Format.fprintf ppf "@[<hov 2>{%a}@]"
-        (Format.pp_print_list ~pp_sep:(fun f () -> Format.fprintf f ",@ ")
+        (Format.pp_print_list
+           ~pp_sep:(fun f () -> Format.fprintf f ",@ ")
            (fun f (k, v) -> Format.fprintf f "%a: %a" pp k pp v))
         kvs
   | List xs ->
       Format.fprintf ppf "@[<hov 2>[%a]@]"
-        (Format.pp_print_list ~pp_sep:(fun f () -> Format.fprintf f ",@ ") pp) xs
+        (Format.pp_print_list ~pp_sep:(fun f () -> Format.fprintf f ",@ ") pp)
+        xs
   | Int n -> Format.fprintf ppf "%Ld" n
   | Big_int { negative; magnitude } ->
-      Format.fprintf ppf "%sbignum(%d bytes)" (if negative then "-" else "")
+      Format.fprintf ppf "%sbignum(%d bytes)"
+        (if negative then "-" else "")
         (String.length magnitude)
-  | Bytes b -> Format.fprintf ppf "0x%s(%d bytes)"
-                 (if String.length b > 4 then "..." else "") (String.length b)
+  | Bytes b ->
+      Format.fprintf ppf "0x%s(%d bytes)"
+        (if String.length b > 4 then "..." else "")
+        (String.length b)

@@ -14,8 +14,8 @@ val empty : t
 (** The master key's own path, [m]. *)
 
 val of_list : int32 list -> t
-(** From raw child numbers, where anything at or above [0x80000000] is
-    hardened. *)
+(** From raw child numbers, where anything at or above [0x80000000] is hardened.
+*)
 
 val to_list : t -> int32 list
 
@@ -60,7 +60,8 @@ val account : account:int32 -> (t, [> `Invalid_range ]) result
 (** [m/1852'/1815'/account'] -- the account-level extended key, which is the
     deepest node it is safe to export for watch-only use. *)
 
-val address : account:int32 -> role:role -> index:int32 -> (t, [> `Invalid_range ]) result
+val address :
+  account:int32 -> role:role -> index:int32 -> (t, [> `Invalid_range ]) result
 (** [m/1852'/1815'/account'/role/index]. *)
 
 val stake : account:int32 -> (t, [> `Invalid_range ]) result

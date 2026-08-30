@@ -37,7 +37,6 @@ and constant =
   | Pair of constant * constant
 
 type program = { version : int * int * int; body : term }
-
 type error = [ `Not_implemented ]
 
 val pp_error : Format.formatter -> [< error ] -> unit

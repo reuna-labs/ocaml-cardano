@@ -14,7 +14,13 @@
  (name test_transaction)
  (modules test_transaction)
  (package cardano-transaction)
- (libraries cardano-types cardano-address cardano-crypto cardano-transaction web3-codec-cbor alcotest))
+ (libraries
+  cardano-types
+  cardano-address
+  cardano-crypto
+  cardano-transaction
+  web3-codec-cbor
+  alcotest))
 
 (test
  (name test_mainnet)
@@ -27,7 +33,12 @@
  (name test_fee)
  (modules test_fee)
  (package cardano-transaction)
- (libraries cardano-types cardano-address cardano-transaction web3-codec-cbor alcotest))
+ (libraries
+  cardano-types
+  cardano-address
+  cardano-transaction
+  web3-codec-cbor
+  alcotest))
 
 (test
  (name test_rpc)
@@ -52,7 +63,16 @@
  (name test_flow_client)
  (modules test_flow_client)
  (package cardano)
- (libraries cardano cardano-rpc cardano-rpc-flow cstruct fmt mirage-flow lwt lwt.unix alcotest))
+ (libraries
+  cardano
+  cardano-rpc
+  cardano-rpc-flow
+  cstruct
+  fmt
+  mirage-flow
+  lwt
+  lwt.unix
+  alcotest))
 
 (test
  (name test_plutus)

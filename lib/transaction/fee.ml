@@ -22,7 +22,10 @@ let coin v =
 let utxo_entry_overhead = 160L
 
 let min_utxo (pp : P.t) (o : Body.Output.t) =
-  let size = Int64.of_int (String.length (Web3_codec_cbor.encode (Body.Output.to_cbor o))) in
+  let size =
+    Int64.of_int
+      (String.length (Web3_codec_cbor.encode (Body.Output.to_cbor o)))
+  in
   let* r = R.of_int64 (Int64.add utxo_entry_overhead size) in
   let* r = R.mul_int64 r pp.P.coins_per_utxo_byte in
   coin (R.floor r)
@@ -40,7 +43,13 @@ let settled_min_utxo pp o =
   let rec go n candidate =
     if n > 8 then Error "minimum-value fixpoint did not settle"
     else
-      let probe = { o with Body.Output.value = { o.Body.Output.value with T.Value.coin = candidate } } in
+      let probe =
+        {
+          o with
+          Body.Output.value =
+            { o.Body.Output.value with T.Value.coin = candidate };
+        }
+      in
       let* need = min_utxo pp probe in
       if T.Coin.compare need candidate <= 0 then Ok candidate
       else go (n + 1) need
@@ -99,9 +108,13 @@ let min_fee (pp : P.t) ~tx_size ?(ex_units = P.ex_units_zero)
     let* base = coin (R.floor base) in
     let* scripts = script_fee pp ex_units in
     let* refs = tier_ref_script_fee pp ref_scripts_size in
-    let* t = Result.map_error (fun e -> Format.asprintf "%a" T.Coin.pp_error e)
-        (T.Coin.add base scripts) in
-    Result.map_error (fun e -> Format.asprintf "%a" T.Coin.pp_error e)
+    let* t =
+      Result.map_error
+        (fun e -> Format.asprintf "%a" T.Coin.pp_error e)
+        (T.Coin.add base scripts)
+    in
+    Result.map_error
+      (fun e -> Format.asprintf "%a" T.Coin.pp_error e)
       (T.Coin.add t refs)
 
 let required_collateral (pp : P.t) fee =

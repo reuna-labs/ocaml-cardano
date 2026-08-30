@@ -4,8 +4,7 @@
     they are not the same thing:
 
     - the {b network id}, a four-bit field in an address header and an optional
-      transaction-body field, which distinguishes only mainnet from "a
-      testnet";
+      transaction-body field, which distinguishes only mainnet from "a testnet";
     - the {b network magic}, a 32-bit protocol parameter that distinguishes
       Preview from Preprod from any other testnet.
 

@@ -3,8 +3,13 @@
    with them zarith -- so at this layer we take the four lines rather than the
    dependency. *)
 
-module B224 = Digestif.Make_BLAKE2B (struct let digest_size = 28 end)
-module B256 = Digestif.Make_BLAKE2B (struct let digest_size = 32 end)
+module B224 = Digestif.Make_BLAKE2B (struct
+  let digest_size = 28
+end)
+
+module B256 = Digestif.Make_BLAKE2B (struct
+  let digest_size = 32
+end)
 
 let blake2b224 s = B224.(to_raw_string (digest_string s))
 let blake2b256 s = B256.(to_raw_string (digest_string s))
@@ -44,13 +49,16 @@ end) : HASH = struct
 
   let to_hex t =
     String.concat ""
-      (List.map (fun c -> Printf.sprintf "%02x" (Char.code c))
+      (List.map
+         (fun c -> Printf.sprintf "%02x" (Char.code c))
          (List.init (String.length t) (String.get t)))
 
   let of_hex h =
     let n = String.length h in
     if n <> size * 2 then
-      Error (Printf.sprintf "%s: expected %d hex characters, got %d" P.name (size * 2) n)
+      Error
+        (Printf.sprintf "%s: expected %d hex characters, got %d" P.name
+           (size * 2) n)
     else
       let nib c =
         match c with
@@ -77,36 +85,50 @@ end) : HASH = struct
 end
 
 module Addr_key_hash = Make_hash (struct
-  let size = 28 and name = "addr_key_hash"
+  let size = 28
+  and name = "addr_key_hash"
+
   let digest = blake2b224
 end)
 
 module Script_hash = Make_hash (struct
-  let size = 28 and name = "script_hash"
+  let size = 28
+  and name = "script_hash"
+
   let digest = blake2b224
 end)
 
 module Pool_key_hash = Make_hash (struct
-  let size = 28 and name = "pool_key_hash"
+  let size = 28
+  and name = "pool_key_hash"
+
   let digest = blake2b224
 end)
 
 module Tx_id = Make_hash (struct
-  let size = 32 and name = "tx_id"
+  let size = 32
+  and name = "tx_id"
+
   let digest = blake2b256
 end)
 
 module Datum_hash = Make_hash (struct
-  let size = 32 and name = "datum_hash"
+  let size = 32
+  and name = "datum_hash"
+
   let digest = blake2b256
 end)
 
 module Aux_data_hash = Make_hash (struct
-  let size = 32 and name = "auxiliary_data_hash"
+  let size = 32
+  and name = "auxiliary_data_hash"
+
   let digest = blake2b256
 end)
 
 module Script_data_hash = Make_hash (struct
-  let size = 32 and name = "script_data_hash"
+  let size = 32
+  and name = "script_data_hash"
+
   let digest = blake2b256
 end)

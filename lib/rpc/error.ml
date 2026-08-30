@@ -17,7 +17,9 @@ let pp ppf = function
         (Yojson.Safe.to_string got)
   | Rpc { code; message; data } ->
       Format.fprintf ppf "node rejected the request (%d): %s%s" code message
-        (match data with None -> "" | Some d -> " -- " ^ Yojson.Safe.to_string d)
+        (match data with
+        | None -> ""
+        | Some d -> " -- " ^ Yojson.Safe.to_string d)
   | Decode { method_; reason } ->
       Format.fprintf ppf "could not read the reply to %s: %s" method_ reason
 

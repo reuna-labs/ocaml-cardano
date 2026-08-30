@@ -10,7 +10,8 @@ let language_tag = function
   | Plutus_v3 -> '\x03'
 
 let language_id = function
-  | Native -> invalid_arg "Script.language_id: native scripts have no language id"
+  | Native ->
+      invalid_arg "Script.language_id: native scripts have no language id"
   | Plutus_v1 -> 0
   | Plutus_v2 -> 1
   | Plutus_v3 -> 2
@@ -27,7 +28,9 @@ let hash t =
 
 type cost_models = (language * int64 list) list
 
-let cbor_int n = if Int64.compare n 0L >= 0 then C.Uint n else C.Nint (Int64.sub (Int64.neg n) 1L)
+let cbor_int n =
+  if Int64.compare n 0L >= 0 then C.Uint n
+  else C.Nint (Int64.sub (Int64.neg n) 1L)
 
 (* An indefinite-length array: 0x9f, items, 0xff. Only PlutusV1's cost model is
    encoded this way, and only inside the language views. *)
@@ -75,7 +78,11 @@ let language_views models =
   else (
     Buffer.add_char b (Char.chr (0xa0 lor 24));
     Buffer.add_char b (Char.chr n));
-  List.iter (fun (k, v) -> Buffer.add_string b k; Buffer.add_string b v) sorted;
+  List.iter
+    (fun (k, v) ->
+      Buffer.add_string b k;
+      Buffer.add_string b v)
+    sorted;
   Buffer.contents b
 
 let empty_map = "\xa0"
@@ -89,7 +96,9 @@ let script_data_hash ~redeemers ~datums ~cost_models =
         let n = List.length ds in
         let hdr =
           if n < 24 then String.make 1 (Char.chr (0x80 lor n))
-          else String.init 2 (fun i -> if i = 0 then Char.chr (0x80 lor 24) else Char.chr n)
+          else
+            String.init 2 (fun i ->
+                if i = 0 then Char.chr (0x80 lor 24) else Char.chr n)
         in
         hdr ^ String.concat "" ds
   in

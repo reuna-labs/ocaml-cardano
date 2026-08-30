@@ -66,7 +66,6 @@ module Output : sig
       encoded size, so a caller computing it has to be able to encode one. *)
 
   val of_cbor : Web3_codec_cbor.t -> (t, string) result
-
   val pp : Format.formatter -> t -> unit
 end
 
@@ -86,8 +85,8 @@ type t = {
   script_data_hash : Cardano_types.Hash.Script_data_hash.t option;
   aux_data_hash : Cardano_types.Hash.Aux_data_hash.t option;
   carried : (int * Web3_codec_cbor.t) list;
-      (** Body fields this release does not interpret, by their CDDL key:
-          4 certificates, 5 withdrawals, 19 voting procedures, 20 proposal
+      (** Body fields this release does not interpret, by their CDDL key: 4
+          certificates, 5 withdrawals, 19 voting procedures, 20 proposal
           procedures, 21 current treasury value, 22 donation. Preserved so a
           body round-trips whole. *)
   raw : string option;

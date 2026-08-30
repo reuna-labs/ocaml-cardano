@@ -16,25 +16,23 @@ module type FLOW = sig
 end
 
 module Make (F : FLOW) = struct
-  type t = {
-    flow : F.flow;
-    host : string;
-    path : string;
-    limits : Http.limits;
-  }
+  type t = { flow : F.flow; host : string; path : string; limits : Http.limits }
 
-  let create ?(host = "localhost") ?(path = "/") ?(limits = Http.default_limits) flow =
+  let create ?(host = "localhost") ?(path = "/") ?(limits = Http.default_limits)
+      flow =
     { flow; host; path; limits }
 
   let flow t = t.flow
-
   let ( let* ) = Lwt.bind
 
   (* Read until the parser says the response is complete. A flow hands over
      whatever arrived, so the parser has to tolerate a split anywhere -- which
      is why it is a state machine rather than a function over a whole buffer. *)
   let exchange t body =
-    let* w = F.write t.flow (Cstruct.of_string (Http.request ~host:t.host ~path:t.path ~body)) in
+    let* w =
+      F.write t.flow
+        (Cstruct.of_string (Http.request ~host:t.host ~path:t.path ~body))
+    in
     match w with
     | Error e -> Lwt.return (Error (Fmt.str "write: %a" F.pp_write_error e))
     | Ok () ->
@@ -48,7 +46,8 @@ module Make (F : FLOW) = struct
               match Http.feed st "" with
               | Http.Done body -> Lwt.return (Ok body)
               | Http.Failed m -> Lwt.return (Error m)
-              | Http.Need_more _ -> Lwt.return (Error "connection closed mid-response"))
+              | Http.Need_more _ ->
+                  Lwt.return (Error "connection closed mid-response"))
           | Ok (`Data cs) -> (
               match Http.feed st (Cstruct.to_string cs) with
               | Http.Done body -> Lwt.return (Ok body)

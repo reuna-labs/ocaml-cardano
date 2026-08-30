@@ -5,10 +5,7 @@ let request_json ~id m =
     @ [ ("id", `Int id) ])
 
 let request ~id m = Yojson.Safe.to_string (request_json ~id m)
-
-let member k = function
-  | `Assoc kvs -> List.assoc_opt k kvs
-  | _ -> None
+let member k = function `Assoc kvs -> List.assoc_opt k kvs | _ -> None
 
 let response ~id m body =
   match Yojson.Safe.from_string body with
@@ -18,10 +15,13 @@ let response ~id m body =
       | Some (`Assoc _ as e) ->
           let code = match member "code" e with Some (`Int c) -> c | _ -> 0 in
           let message =
-            match member "message" e with Some (`String s) -> s | _ -> "(no message)"
+            match member "message" e with
+            | Some (`String s) -> s
+            | _ -> "(no message)"
           in
           Error (Error.Rpc { code; message; data = member "data" e })
-      | Some other -> Error (Error.Invalid_response (Yojson.Safe.to_string other))
+      | Some other ->
+          Error (Error.Invalid_response (Yojson.Safe.to_string other))
       | None -> (
           match member "id" json with
           | Some (`Int got) when got <> id ->
@@ -35,8 +35,10 @@ let response ~id m body =
               | Some (`String got) when got <> Method.name m ->
                   Error
                     (Error.Invalid_response
-                       (Printf.sprintf "reply is for %S, not %S" got (Method.name m)))
+                       (Printf.sprintf "reply is for %S, not %S" got
+                          (Method.name m)))
               | _ -> (
                   match member "result" json with
                   | Some result -> Method.decode m result
-                  | None -> Error (Error.Invalid_response "reply has no result")))))
+                  | None -> Error (Error.Invalid_response "reply has no result")
+                  ))))

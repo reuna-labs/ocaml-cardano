@@ -21,6 +21,7 @@ type evaluation = {
 
 val query_network_tip : unit -> tip Method.t
 val query_network_start_time : unit -> string Method.t
+
 val query_genesis_configuration : string -> Yojson.Safe.t Method.t
 (** The era, as Ogmios names it: ["byron"], ["shelley"], ["alonzo"] or
     ["conway"]. Each era has its own genesis file and they are not

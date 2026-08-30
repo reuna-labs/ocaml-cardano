@@ -20,9 +20,11 @@ type t =
   | Rpc of rpc
   | Decode of { method_ : string; reason : string }
       (** The node answered and we could not read it. Distinct from
-          {!Invalid_response} because it points at this library, not the node. *)
+          {!Invalid_response} because it points at this library, not the node.
+      *)
 
 val pp : Format.formatter -> t -> unit
+
 val is_retryable : t -> bool
 (** True for transport failures only. A malformed or unreadable answer will be
     malformed again, and a ledger rejection will be rejected again. *)

@@ -18,9 +18,11 @@ module Vkey = struct
 
   let make ~vkey ~signature =
     if String.length vkey <> 32 then
-      err "vkey witness: public key is %d bytes, expected 32" (String.length vkey)
+      err "vkey witness: public key is %d bytes, expected 32"
+        (String.length vkey)
     else if String.length signature <> 64 then
-      err "vkey witness: signature is %d bytes, expected 64" (String.length signature)
+      err "vkey witness: signature is %d bytes, expected 64"
+        (String.length signature)
     else Ok { vkey; signature }
 
   let key_hash t =
@@ -56,8 +58,9 @@ let is_empty t = t.vkeys = [] && t.carried = []
 let cbor t =
   let fields =
     (match t.vkeys with
-    | [] -> []
-    | vs -> [ (C.Uint 0L, C.Tag (list_tag, C.Array (List.map Vkey.to_cbor vs))) ])
+      | [] -> []
+      | vs ->
+          [ (C.Uint 0L, C.Tag (list_tag, C.Array (List.map Vkey.to_cbor vs))) ])
     @ List.map (fun (k, v) -> (C.uint_of_int k, v)) t.carried
   in
   C.Map fields
@@ -68,7 +71,8 @@ let of_value = function
   | C.Map fields ->
       let find k =
         List.find_map
-          (fun (kk, vv) -> if kk = C.Uint (Int64.of_int k) then Some vv else None)
+          (fun (kk, vv) ->
+            if kk = C.Uint (Int64.of_int k) then Some vv else None)
           fields
       in
       let* vkeys =

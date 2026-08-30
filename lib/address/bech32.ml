@@ -41,6 +41,7 @@ let cardano_max_length = 256
 
 (* BIP173: 1..83 characters, each in the printable ASCII range 33..126. *)
 let max_hrp_length = 83
+
 let valid_hrp hrp =
   let n = String.length hrp in
   n >= 1 && n <= max_hrp_length
@@ -93,7 +94,7 @@ let convertbits ?(pad = true) data ~from ~into =
   List.iter
     (fun v ->
       if v < 0 || v lsr from <> 0 then ok := false;
-      acc := ((!acc lsl from) lor v) land accmask;
+      acc := (!acc lsl from) lor v land accmask;
       bits := !bits + from;
       while !bits >= into do
         bits := !bits - into;
@@ -103,19 +104,22 @@ let convertbits ?(pad = true) data ~from ~into =
   if pad then begin
     if !bits > 0 then out := ((!acc lsl (into - !bits)) land maxv) :: !out
   end
-  else if !bits >= from || (!acc lsl (into - !bits)) land maxv <> 0 then ok := false;
+  else if !bits >= from || (!acc lsl (into - !bits)) land maxv <> 0 then
+    ok := false;
   if !ok then Some (List.rev !out) else None
 
 (* [encode enc ~hrp ~data]: [data] are 5-bit groups (0..31). *)
 let encode ?(max_length = default_max_length) enc ~hrp ~data =
   if not (valid_hrp hrp) then
-    invalid_arg "Bech32.encode: human-readable part must be 1..83 chars in ASCII 33..126";
+    invalid_arg
+      "Bech32.encode: human-readable part must be 1..83 chars in ASCII 33..126";
   if not (List.for_all (fun d -> d >= 0 && d <= 31) data) then
     invalid_arg "Bech32.encode: data groups must be 5-bit values (0..31)";
   if String.length hrp + 1 + List.length data + 6 > max_length then
     invalid_arg "Bech32.encode: result exceeds the permitted length";
   let combined = data @ create_checksum enc hrp data in
-  hrp ^ "1" ^ String.concat "" (List.map (fun d -> String.make 1 charset.[d]) combined)
+  hrp ^ "1"
+  ^ String.concat "" (List.map (fun d -> String.make 1 charset.[d]) combined)
 
 let decode ?(max_length = default_max_length) s =
   let n = String.length s in
@@ -133,32 +137,32 @@ let decode ?(max_length = default_max_length) s =
       match String.rindex_opt s '1' with
       | None -> Error "bech32: missing separator"
       | Some sep ->
-        if sep < 1 || sep + 7 > n then Error "bech32: misplaced separator"
-        else begin
-          let hrp = String.sub s 0 sep in
-          if not (valid_hrp hrp) then Error "bech32: invalid human-readable part"
+          if sep < 1 || sep + 7 > n then Error "bech32: misplaced separator"
           else begin
-            let data_part = String.sub s (sep + 1) (n - sep - 1) in
-            let exception Bad in
-            match
-              List.init (String.length data_part) (fun i ->
-                  let d = inverse.(Char.code data_part.[i]) in
-                  if d < 0 then raise Bad;
-                  d)
-            with
-            | values -> (
-              match verify_checksum hrp values with
-              | None -> Error "bech32: bad checksum"
-              | Some enc ->
-                let keep = List.length values - 6 in
-                let data = List.filteri (fun i _ -> i < keep) values in
-                Ok (enc, hrp, data))
-            | exception Bad -> Error "bech32: invalid character"
+            let hrp = String.sub s 0 sep in
+            if not (valid_hrp hrp) then
+              Error "bech32: invalid human-readable part"
+            else begin
+              let data_part = String.sub s (sep + 1) (n - sep - 1) in
+              let exception Bad in
+              match
+                List.init (String.length data_part) (fun i ->
+                    let d = inverse.(Char.code data_part.[i]) in
+                    if d < 0 then raise Bad;
+                    d)
+              with
+              | values -> (
+                  match verify_checksum hrp values with
+                  | None -> Error "bech32: bad checksum"
+                  | Some enc ->
+                      let keep = List.length values - 6 in
+                      let data = List.filteri (fun i _ -> i < keep) values in
+                      Ok (enc, hrp, data))
+              | exception Bad -> Error "bech32: invalid character"
+            end
           end
-        end
     end
   end
-
 
 (* ---- byte-oriented wrappers ----
 
@@ -189,5 +193,5 @@ let decode_bytes ?(max_length = cardano_max_length) s =
           Ok
             ( enc,
               hrp,
-              String.init (List.length bytes) (fun i -> Char.chr (List.nth bytes i))
-            ))
+              String.init (List.length bytes) (fun i ->
+                  Char.chr (List.nth bytes i)) ))

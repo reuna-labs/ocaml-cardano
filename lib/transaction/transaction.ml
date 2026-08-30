@@ -57,12 +57,14 @@ let to_cbor t =
   | None ->
       C.encode
         (C.Array
-           [ (match C.of_octets (Body.to_cbor t.body) with
+           [
+             (match C.of_octets (Body.to_cbor t.body) with
              | Ok v -> v
              | Error m -> invalid_arg ("Transaction.to_cbor: " ^ m));
              Witness.cbor t.witness_set;
              C.Bool t.is_valid;
-             (match t.auxiliary_data with None -> C.Null | Some a -> a) ])
+             (match t.auxiliary_data with None -> C.Null | Some a -> a);
+           ])
 
 let id t = Body.id t.body
 
@@ -87,7 +89,8 @@ let add_signature t ~vkey ~signature =
   let* w = Witness.Vkey.make ~vkey ~signature in
   if not (Witness.Vkey.verify w (id t)) then
     err
-      "signature does not verify against this transaction id (%s) -- it was        made over different bytes, or by a different key"
+      "signature does not verify against this transaction id (%s) -- it \
+       was        made over different bytes, or by a different key"
       (Cardano_types.Hash.Tx_id.to_hex (id t))
   else Ok (with_witnesses t (Witness.add_vkey t.witness_set w))
 

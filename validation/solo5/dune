@@ -9,10 +9,18 @@
 ; falls back to the stub bindings, and the binary links but carries no ABI note
 ; -- which solo5-elftool then rejects with "note does not fall within valid
 ; size". It looks like a linker-script bug and is a flag-plumbing one.
+
 (executable
  (name unikernel)
  (modules unikernel)
  (libraries cardano-types cardano-address cardano-crypto cardano-transaction)
- (enabled_if (= %{context_name} "default.solo5"))
- (foreign_stubs (language c) (names shim manifest mirage_mm mirage_clock) (flags -I/Users/gilbahat/.opam/reuna-5.5/include/solo5 -I/Users/gilbahat/.opam/reuna-5.5/lib/ocaml-solo5/lib/ocaml))
- (link_flags (-ccopt -z -ccopt solo5-abi=sptmac)))
+ (enabled_if
+  (= %{context_name} "default.solo5"))
+ (foreign_stubs
+  (language c)
+  (names shim manifest mirage_mm mirage_clock)
+  (flags
+   -I/Users/gilbahat/.opam/reuna-5.5/include/solo5
+   -I/Users/gilbahat/.opam/reuna-5.5/lib/ocaml-solo5/lib/ocaml))
+ (link_flags
+  (-ccopt -z -ccopt solo5-abi=sptmac)))

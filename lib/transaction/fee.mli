@@ -8,7 +8,9 @@
 (** {1 Minimum UTXO} *)
 
 val min_utxo :
-  Cardano_types.Protocol_params.t -> Body.Output.t -> (Cardano_types.Coin.t, string) result
+  Cardano_types.Protocol_params.t ->
+  Body.Output.t ->
+  (Cardano_types.Coin.t, string) result
 (** [(160 + |CBOR(output)|) * coinsPerUTxOByte].
 
     The 160 is the ledger's approximation of the memory an entry costs beyond
@@ -23,9 +25,11 @@ val meets_min_utxo :
   Cardano_types.Protocol_params.t -> Body.Output.t -> (bool, string) result
 
 val settled_min_utxo :
-  Cardano_types.Protocol_params.t -> Body.Output.t -> (Cardano_types.Coin.t, string) result
-(** The least ada this output can hold and still satisfy {!min_utxo} {e once it
-    is holding it}.
+  Cardano_types.Protocol_params.t ->
+  Body.Output.t ->
+  (Cardano_types.Coin.t, string) result
+(** The least ada this output can hold and still satisfy {!min_utxo}
+    {e once it is holding it}.
 
     {!min_utxo} alone is not that number. Raising an output's ada makes the
     output longer -- one lovelace encodes in a byte, a million takes five -- and
@@ -40,9 +44,11 @@ val settled_min_utxo :
 (** {1 Fees} *)
 
 val tier_ref_script_fee :
-  Cardano_types.Protocol_params.t -> int -> (Cardano_types.Coin.t, string) result
-(** Conway's reference-script charge: the price per byte is constant within a
-    25 600-byte tier and multiplied by 6/5 at each tier boundary.
+  Cardano_types.Protocol_params.t ->
+  int ->
+  (Cardano_types.Coin.t, string) result
+(** Conway's reference-script charge: the price per byte is constant within a 25
+    600-byte tier and multiplied by 6/5 at each tier boundary.
 
     {b It rounds down.} The rest of the fee calculation rounds up, and copying
     that here overpays; the mirror-image mistake underpays, and an underpaid
@@ -66,13 +72,16 @@ val min_fee :
 (** [minFeeA * tx_size + minFeeB], plus the execution and reference-script
     charges.
 
-    [tx_size] is the size of the {b fully serialized transaction, witnesses
-    included} -- which is why a fee cannot be computed before the number of
-    signatures is known, and why a builder has to iterate. *)
+    [tx_size] is the size of the
+    {b fully serialized transaction, witnesses included} -- which is why a fee
+    cannot be computed before the number of signatures is known, and why a
+    builder has to iterate. *)
 
 (** {1 Collateral} *)
 
 val required_collateral :
-  Cardano_types.Protocol_params.t -> Cardano_types.Coin.t -> (Cardano_types.Coin.t, string) result
+  Cardano_types.Protocol_params.t ->
+  Cardano_types.Coin.t ->
+  (Cardano_types.Coin.t, string) result
 (** [ceil(fee * collateralPercentage / 100)]. What must be put at risk to run a
     script, and what is forfeit if phase-2 validation fails. *)

@@ -21,7 +21,8 @@ let den t = t.d
 
 let of_ratio n d =
   if Int64.compare n 0L < 0 then Error "rational: numerator is negative"
-  else if Int64.compare d 1L < 0 then Error "rational: denominator is not positive"
+  else if Int64.compare d 1L < 0 then
+    Error "rational: denominator is not positive"
   else Ok (reduce n d)
 
 let of_int64 n = of_ratio n 1L
@@ -34,10 +35,13 @@ let of_decimal_string s =
     let whole, frac =
       match String.index_opt s '.' with
       | None -> (s, "")
-      | Some i -> (String.sub s 0 i, String.sub s (i + 1) (String.length s - i - 1))
+      | Some i ->
+          (String.sub s 0 i, String.sub s (i + 1) (String.length s - i - 1))
     in
-    let digits x = String.for_all (function '0' .. '9' -> true | _ -> false) x in
-    if whole = "" || not (digits whole) || not (digits frac) then
+    let digits x =
+      String.for_all (function '0' .. '9' -> true | _ -> false) x
+    in
+    if whole = "" || (not (digits whole)) || not (digits frac) then
       Error (Printf.sprintf "rational: %S is not a decimal" s)
     else if String.length frac > 18 then
       Error "rational: more decimal places than int64 can hold exactly"
@@ -64,7 +68,8 @@ let add x y =
         Result.bind (mul_checked "addition" y.n x.d) (fun b ->
             Result.bind (mul_checked "addition" x.d y.d) (fun d ->
                 let s = Int64.add a b in
-                if Int64.compare s 0L < 0 then Error "rational: addition overflowed int64"
+                if Int64.compare s 0L < 0 then
+                  Error "rational: addition overflowed int64"
                 else Ok (reduce s d))))
 
 let mul x y =
@@ -76,7 +81,8 @@ let mul x y =
   let yn = if Int64.equal g2 0L then y.n else Int64.div y.n g2 in
   let xd = if Int64.equal g2 0L then x.d else Int64.div x.d g2 in
   Result.bind (mul_checked "multiplication" xn yn) (fun n ->
-      Result.bind (mul_checked "multiplication" xd yd) (fun d -> Ok (reduce n d)))
+      Result.bind (mul_checked "multiplication" xd yd) (fun d ->
+          Ok (reduce n d)))
 
 let mul_int64 x k =
   if Int64.compare k 0L < 0 then Error "rational: multiplier is negative"
@@ -101,5 +107,7 @@ let compare x y =
           (Int64.to_float y.n /. Int64.to_float y.d)
 
 let equal x y = compare x y = 0
-let pp ppf t = if Int64.equal t.d 1L then Format.fprintf ppf "%Ld" t.n
+
+let pp ppf t =
+  if Int64.equal t.d 1L then Format.fprintf ppf "%Ld" t.n
   else Format.fprintf ppf "%Ld/%Ld" t.n t.d

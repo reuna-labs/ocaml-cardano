@@ -11,8 +11,8 @@
     is the same code with a different flow, which is what makes the Unix path
     worth trusting as a rehearsal for the enclave one.
 
-    TLS, where it is wanted, wraps the flow rather than living here: a TLS
-    flow is a flow. *)
+    TLS, where it is wanted, wraps the flow rather than living here: a TLS flow
+    is a flow. *)
 
 module Http = Http
 
@@ -40,13 +40,15 @@ module Make (F : FLOW) : sig
 
   val create :
     ?host:string -> ?path:string -> ?limits:Http.limits -> F.flow -> t
-  (** [host] fills the [Host] header, [path] the request target (default
-      ["/"]). The flow must already be connected; this never dials, because on
-      a unikernel dialling is the caller's business and needs a device it owns. *)
+  (** [host] fills the [Host] header, [path] the request target (default ["/"]).
+      The flow must already be connected; this never dials, because on a
+      unikernel dialling is the caller's business and needs a device it owns. *)
 
   val flow : t -> F.flow
 
-  module Provider : Cardano_rpc.Provider.S with type t = t and type 'a io = 'a Lwt.t
+  module Provider :
+    Cardano_rpc.Provider.S with type t = t and type 'a io = 'a Lwt.t
 
-  val call : t -> 'a Cardano_rpc.Method.t -> ('a, Cardano_rpc.Error.t) result Lwt.t
+  val call :
+    t -> 'a Cardano_rpc.Method.t -> ('a, Cardano_rpc.Error.t) result Lwt.t
 end

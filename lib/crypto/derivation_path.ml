@@ -35,15 +35,11 @@ let to_string ?(marker = `Apostrophe) t =
 
 let of_string s =
   let parts = String.split_on_char '/' s in
-  let parts =
-    match parts with
-    | ("m" | "M") :: rest -> rest
-    | rest -> rest
-  in
+  let parts = match parts with ("m" | "M") :: rest -> rest | rest -> rest in
   let parse acc p =
     match acc with
     | Error _ as e -> e
-    | Ok acc ->
+    | Ok acc -> (
         let n = String.length p in
         if n = 0 then Error `Invalid_format
         else
@@ -54,7 +50,10 @@ let of_string s =
           in
           if
             digits = ""
-            || not (String.for_all (function '0' .. '9' -> true | _ -> false) digits)
+            || not
+                 (String.for_all
+                    (function '0' .. '9' -> true | _ -> false)
+                    digits)
           then Error `Invalid_format
           else
             match Int32.of_string_opt digits with
@@ -66,7 +65,9 @@ let of_string s =
                    so an out-of-range index arrives here as a negative. *)
                 if Int32.compare i 0l < 0 then Error `Invalid_format
                 else
-                  Ok ((if hardened then Int32.logor i hardened_bit else i) :: acc)
+                  Ok
+                    ((if hardened then Int32.logor i hardened_bit else i) :: acc)
+        )
   in
   match List.fold_left parse (Ok []) parts with
   | Ok l -> Ok (List.rev l)

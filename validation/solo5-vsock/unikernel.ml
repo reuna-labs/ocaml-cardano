@@ -10,6 +10,7 @@ let ( let* ) = Lwt.bind
 
 module Log = struct
   external write : string -> unit = "cardano_console_write"
+
   let say s = write s
 end
 
@@ -23,7 +24,9 @@ let main () =
   Log.say "vsock: opening device\n";
   let* dev = Mirage_vsock_solo5.connect "vsock0" in
   Log.say "vsock: dialling the host\n";
-  let* r = Mirage_vsock_solo5.create_connection dev ~cid:host_cid ~port:host_port in
+  let* r =
+    Mirage_vsock_solo5.create_connection dev ~cid:host_cid ~port:host_port
+  in
   match r with
   | Error _ ->
       Log.say "vsock: could not connect\n";
@@ -33,18 +36,22 @@ let main () =
       let t = Client.create ~host:"ogmios" flow in
       let* epoch = Client.call t (Cardano_rpc.Ogmios.query_epoch ()) in
       (match epoch with
-       | Ok n ->
-           Log.say ("ogmios: epoch = " ^ Int64.to_string n ^ "\n")
-       | Error e ->
-           Log.say ("ogmios: " ^ Format.asprintf "%a" Cardano_rpc.Error.pp e ^ "\n"));
+      | Ok n -> Log.say ("ogmios: epoch = " ^ Int64.to_string n ^ "\n")
+      | Error e ->
+          Log.say
+            ("ogmios: " ^ Format.asprintf "%a" Cardano_rpc.Error.pp e ^ "\n"));
       (* A second call over the same flow, to show the connection is reusable
          and the request ids stay correlated. *)
       let* tip = Client.call t (Cardano_rpc.Ogmios.query_tip ()) in
       (match tip with
-       | Ok tip ->
-           Log.say ("ogmios: tip slot = " ^ Int64.to_string tip.Cardano_rpc.Ogmios.slot ^ "\n")
-       | Error e ->
-           Log.say ("ogmios: " ^ Format.asprintf "%a" Cardano_rpc.Error.pp e ^ "\n"));
+      | Ok tip ->
+          Log.say
+            ("ogmios: tip slot = "
+            ^ Int64.to_string tip.Cardano_rpc.Ogmios.slot
+            ^ "\n")
+      | Error e ->
+          Log.say
+            ("ogmios: " ^ Format.asprintf "%a" Cardano_rpc.Error.pp e ^ "\n"));
       Log.say "cardano: ogmios query over vsock verified in-guest\n";
       Lwt.return_unit
 

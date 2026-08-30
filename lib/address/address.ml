@@ -38,7 +38,8 @@ type error =
 
 let pp_error ppf = function
   | `Invalid_length n -> Format.fprintf ppf "address: wrong length (%d bytes)" n
-  | `Unknown_header h -> Format.fprintf ppf "address: unknown header type %d" (h lsr 4)
+  | `Unknown_header h ->
+      Format.fprintf ppf "address: unknown header type %d" (h lsr 4)
   | `Invalid_network n -> Format.fprintf ppf "address: bad network id %d" n
   | `Invalid_pointer -> Format.pp_print_string ppf "address: malformed pointer"
   | `Trailing_bytes n -> Format.fprintf ppf "address: %d trailing bytes" n
@@ -47,7 +48,8 @@ let pp_error ppf = function
       Format.pp_print_string ppf
         "address: not bech32 (a Byron address is base58 and is not supported)"
   | `Byron_unsupported ->
-      Format.pp_print_string ppf "address: Byron addresses are not constructed here"
+      Format.pp_print_string ppf
+        "address: Byron addresses are not constructed here"
 
 module Credential = struct
   type t = Key of H.Addr_key_hash.t | Script of H.Script_hash.t
@@ -57,7 +59,9 @@ module Credential = struct
     | Script h -> H.Script_hash.to_bytes h
 
   let is_script = function Script _ -> true | Key _ -> false
-  let equal a b = is_script a = is_script b && String.equal (to_bytes a) (to_bytes b)
+
+  let equal a b =
+    is_script a = is_script b && String.equal (to_bytes a) (to_bytes b)
 
   let compare a b =
     match Bool.compare (is_script a) (is_script b) with
@@ -68,7 +72,8 @@ module Credential = struct
     Format.fprintf ppf "%s:%s"
       (if is_script c then "script" else "key")
       (String.concat ""
-         (List.map (fun ch -> Printf.sprintf "%02x" (Char.code ch))
+         (List.map
+            (fun ch -> Printf.sprintf "%02x" (Char.code ch))
             (List.init (String.length (to_bytes c)) (String.get (to_bytes c)))))
 
   let of_bytes ~script s =
@@ -84,7 +89,8 @@ module Pointer = struct
     && Int64.equal a.tx_index b.tx_index
     && Int64.equal a.cert_index b.cert_index
 
-  let pp ppf p = Format.fprintf ppf "(%Ld,%Ld,%Ld)" p.slot p.tx_index p.cert_index
+  let pp ppf p =
+    Format.fprintf ppf "(%Ld,%Ld,%Ld)" p.slot p.tx_index p.cert_index
 
   (* Base-128, most significant group first, continuation bit set on every byte
      but the last. This is the ledger's own "variable length natural", not a
@@ -113,7 +119,9 @@ module Pointer = struct
       else if n > 10 then Error `Invalid_pointer
       else
         let b = Char.code s.[pos] in
-        let acc = Int64.logor (Int64.shift_left acc 7) (Int64.of_int (b land 0x7f)) in
+        let acc =
+          Int64.logor (Int64.shift_left acc 7) (Int64.of_int (b land 0x7f))
+        in
         if b land 0x80 = 0 then Ok (acc, pos + 1) else go (pos + 1) acc (n + 1)
     in
     go pos 0L 0
@@ -127,8 +135,11 @@ type t =
   | Byron of string
 
 let network = function
-  | Base { network; _ } | Pointer { network; _ } | Enterprise { network; _ }
-  | Reward { network; _ } -> network
+  | Base { network; _ }
+  | Pointer { network; _ }
+  | Enterprise { network; _ }
+  | Reward { network; _ } ->
+      network
   | Byron _ -> N.mainnet
 
 let payment_credential = function
@@ -142,21 +153,26 @@ let stake_credential = function
   | Pointer _ | Enterprise _ | Byron _ -> None
 
 let is_script a =
-  match payment_credential a with Some c -> Credential.is_script c | None -> false
+  match payment_credential a with
+  | Some c -> Credential.is_script c
+  | None -> false
 
 let header_of = function
   | Base { network; payment; stake } ->
       let t =
         (if Credential.is_script payment then 1 else 0)
-        lor (if Credential.is_script stake then 2 else 0)
+        lor if Credential.is_script stake then 2 else 0
       in
       (t lsl 4) lor N.id network
   | Pointer { network; payment; _ } ->
-      ((4 lor if Credential.is_script payment then 1 else 0) lsl 4) lor N.id network
+      ((4 lor if Credential.is_script payment then 1 else 0) lsl 4)
+      lor N.id network
   | Enterprise { network; payment } ->
-      ((6 lor if Credential.is_script payment then 1 else 0) lsl 4) lor N.id network
+      ((6 lor if Credential.is_script payment then 1 else 0) lsl 4)
+      lor N.id network
   | Reward { network; stake } ->
-      ((14 lor if Credential.is_script stake then 1 else 0) lsl 4) lor N.id network
+      ((14 lor if Credential.is_script stake then 1 else 0) lsl 4)
+      lor N.id network
   | Byron _ -> 0b1000_0000
 
 let to_bytes a =
@@ -164,7 +180,8 @@ let to_bytes a =
   | Byron raw -> raw
   | Base { payment; stake; _ } ->
       String.make 1 (Char.chr (header_of a))
-      ^ Credential.to_bytes payment ^ Credential.to_bytes stake
+      ^ Credential.to_bytes payment
+      ^ Credential.to_bytes stake
   | Pointer { payment; pointer; _ } ->
       String.make 1 (Char.chr (header_of a))
       ^ Credential.to_bytes payment
@@ -177,7 +194,10 @@ let to_bytes a =
       String.make 1 (Char.chr (header_of a)) ^ Credential.to_bytes stake
 
 let ( let* ) = Result.bind
-let cred ~script s = Result.map_error (fun _ -> `Invalid_length (String.length s))
+
+let cred ~script s =
+  Result.map_error
+    (fun _ -> `Invalid_length (String.length s))
     (Credential.of_bytes ~script s)
 
 let of_bytes s =
@@ -189,10 +209,13 @@ let of_bytes s =
     if kind = 0b1000 then Ok (Byron s)
     else
       let* network =
-        Result.map_error (fun _ -> `Invalid_network (h land 0x0f)) (N.of_id (h land 0x0f))
+        Result.map_error
+          (fun _ -> `Invalid_network (h land 0x0f))
+          (N.of_id (h land 0x0f))
       in
       let at i n =
-        if i + n > len then Error (`Invalid_length len) else Ok (String.sub s i n)
+        if i + n > len then Error (`Invalid_length len)
+        else Ok (String.sub s i n)
       in
       match kind with
       | 0 | 1 | 2 | 3 ->
@@ -213,7 +236,11 @@ let of_bytes s =
           else
             Ok
               (Pointer
-                 { network; payment; pointer = { Pointer.slot; tx_index; cert_index } })
+                 {
+                   network;
+                   payment;
+                   pointer = { Pointer.slot; tx_index; cert_index };
+                 })
       | 6 | 7 ->
           if len <> 29 then Error (`Invalid_length len)
           else
@@ -233,13 +260,20 @@ let of_bytes s =
 let hrp = function
   | Byron _ -> Error `Byron_unsupported
   | Reward { network; _ } ->
-      Ok (match network with N.Mainnet -> "stake" | N.Testnet _ -> "stake_test")
+      Ok
+        (match network with
+        | N.Mainnet -> "stake"
+        | N.Testnet _ -> "stake_test")
   | a ->
-      Ok (match network a with N.Mainnet -> "addr" | N.Testnet _ -> "addr_test")
+      Ok
+        (match network a with
+        | N.Mainnet -> "addr"
+        | N.Testnet _ -> "addr_test")
 
 let to_bech32 a =
   let* hrp = hrp a in
-  Result.map_error (fun m -> `Bech32 m)
+  Result.map_error
+    (fun m -> `Bech32 m)
     (Bech32.encode_bytes Bech32.Bech32 ~hrp (to_bytes a))
 
 let of_bech32 s =
@@ -247,7 +281,8 @@ let of_bech32 s =
   let* enc, got_hrp, payload =
     Result.map_error (fun m -> `Bech32 m) (Bech32.decode_bytes s)
   in
-  if enc <> Bech32.Bech32 then Error (`Bech32 "bech32m checksum on a bech32 address")
+  if enc <> Bech32.Bech32 then
+    Error (`Bech32 "bech32m checksum on a bech32 address")
   else
     let* a = of_bytes payload in
     (* The human-readable part is not decoration: it says which chain and which

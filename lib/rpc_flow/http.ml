@@ -19,12 +19,7 @@ let request ~host ~path ~body =
     path host (String.length body) body
 
 type framing = Length of int | Chunked | Until_close
-
-type phase =
-  | Headers
-  | Body of framing
-  | Chunk_header
-  | Chunk_body of int
+type phase = Headers | Body of framing | Chunk_header | Chunk_body of int
 
 type state = {
   limits : limits;
@@ -36,8 +31,14 @@ type state = {
 }
 
 let start ?(limits = default_limits) () =
-  { limits; buf = Buffer.create 1024; out = Buffer.create 1024; phase = Headers;
-    status = None; got = 0 }
+  {
+    limits;
+    buf = Buffer.create 1024;
+    out = Buffer.create 1024;
+    phase = Headers;
+    status = None;
+    got = 0;
+  }
 
 let status t = t.status
 
@@ -45,7 +46,11 @@ type progress = Need_more of state | Done of string | Failed of string
 
 let index_sub s sub from =
   let n = String.length s and m = String.length sub in
-  let rec go i = if i + m > n then None else if String.sub s i m = sub then Some i else go (i + 1) in
+  let rec go i =
+    if i + m > n then None
+    else if String.sub s i m = sub then Some i
+    else go (i + 1)
+  in
   go from
 
 let lower = String.lowercase_ascii
@@ -76,12 +81,15 @@ let rec run t =
       match index_sub s "\r\n\r\n" 0 with
       | None ->
           if String.length s > t.limits.max_headers then
-            Failed (Printf.sprintf "headers exceed %d bytes" t.limits.max_headers)
+            Failed
+              (Printf.sprintf "headers exceed %d bytes" t.limits.max_headers)
           else Need_more t
-      | Some i ->
+      | Some i -> (
           let head = String.sub s 0 i in
           let rest = String.sub s (i + 4) (String.length s - i - 4) in
-          let lines = String.split_on_char '\n' head |> List.map (fun l -> String.trim l) in
+          let lines =
+            String.split_on_char '\n' head |> List.map (fun l -> String.trim l)
+          in
           let status_line, headers =
             match lines with [] -> ("", []) | h :: t -> (h, t)
           in
@@ -91,19 +99,24 @@ let rec run t =
             | Some te when lower te = "chunked" -> Some Chunked
             | _ -> (
                 match find_header headers "content-length" with
-                | Some v -> ( match int_of_string_opt (String.trim v) with
-                              | Some n -> Some (Length n)
-                              | None -> None)
+                | Some v -> (
+                    match int_of_string_opt (String.trim v) with
+                    | Some n -> Some (Length n)
+                    | None -> None)
                 | None -> Some Until_close)
           in
-          (match framing with
+          match framing with
           | None -> Failed "malformed Content-Length"
           | Some (Length n) when n > t.limits.max_body ->
-              Failed (Printf.sprintf "body of %d bytes exceeds the %d-byte limit" n t.limits.max_body)
+              Failed
+                (Printf.sprintf "body of %d bytes exceeds the %d-byte limit" n
+                   t.limits.max_body)
           | Some f ->
               Buffer.clear t.buf;
               Buffer.add_string t.buf rest;
-              let phase = match f with Chunked -> Chunk_header | f -> Body f in
+              let phase =
+                match f with Chunked -> Chunk_header | f -> Body f
+              in
               run { t with phase; status }))
   | Body (Length n) ->
       if String.length s >= n - t.got then (
@@ -128,14 +141,15 @@ let rec run t =
       | None ->
           if String.length s > 64 then Failed "malformed chunk header"
           else Need_more t
-      | Some i ->
+      | Some i -> (
           let line = String.sub s 0 i in
           (* A chunk header may carry extensions after a semicolon. *)
-          let hex = match String.index_opt line ';' with
+          let hex =
+            match String.index_opt line ';' with
             | None -> line
             | Some j -> String.sub line 0 j
           in
-          (match int_of_string_opt ("0x" ^ String.trim hex) with
+          match int_of_string_opt ("0x" ^ String.trim hex) with
           | None -> Failed (Printf.sprintf "malformed chunk length %S" hex)
           | Some 0 -> Done (Buffer.contents t.out)
           | Some n ->

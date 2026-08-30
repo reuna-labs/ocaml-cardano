@@ -2,9 +2,9 @@
 
     Cardano's [nonnegative_interval] is [#6.30([uint, positive_int])] -- a
     literal fraction, not a decimal. Execution prices and the reference-script
-    rate are given this way, and the fee they feed into is rounded at a
-    specific point. Going through [float] would round somewhere else, by an
-    amount too small to notice and large enough to have a transaction rejected.
+    rate are given this way, and the fee they feed into is rounded at a specific
+    point. Going through [float] would round somewhere else, by an amount too
+    small to notice and large enough to have a transaction rejected.
 
     Every operation is checked. Overflow is an error rather than a wrap, on the
     same reasoning as {!Coin}: a fee that silently wrapped is not a slightly
@@ -32,7 +32,6 @@ val of_decimal_string : string -> (t, string) result
     double has lost whatever exact rational the ledger holds; parsing its
     shortest round-tripping decimal is the closest recovery available, and the
     caller should supply the parameter directly if exactness matters. *)
-
 
 val num : t -> int64
 val den : t -> int64

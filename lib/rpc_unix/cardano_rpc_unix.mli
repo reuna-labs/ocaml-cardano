@@ -23,12 +23,15 @@ val create :
 
 val flow : t -> Lwt_unix.file_descr
 
-val connect_tcp : ?host_header:string -> ?path:string -> string -> int -> t Lwt.t
+val connect_tcp :
+  ?host_header:string -> ?path:string -> string -> int -> t Lwt.t
+
 val connect_unix : ?host_header:string -> ?path:string -> string -> t Lwt.t
 (** Dials a Unix domain socket, which is how a vsock relay is reached from the
     host side. *)
 
-val call : t -> 'a Cardano_rpc.Method.t -> ('a, Cardano_rpc.Error.t) result Lwt.t
+val call :
+  t -> 'a Cardano_rpc.Method.t -> ('a, Cardano_rpc.Error.t) result Lwt.t
 
 module Provider :
   Cardano_rpc.Provider.S with type t = t and type 'a io = 'a Lwt.t

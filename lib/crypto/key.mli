@@ -7,8 +7,8 @@
     non-hardened public derivation possible, and it is why these keys cannot be
     handed to an ordinary Ed25519 library's key generation.
 
-    Signing is the ordinary Ed25519 equation over that extended key, so any
-    RFC 8032 verifier accepts the signatures.
+    Signing is the ordinary Ed25519 equation over that extended key, so any RFC
+    8032 verifier accepts the signatures.
 
     {b Not constant time.} Derivation does plain byte arithmetic on secret
     scalars and inherits variable-time point decoding. See [SECURITY.md]. *)
@@ -75,19 +75,19 @@ val verify_raw : vkey:string -> signature:string -> string -> bool
 
 (** {1 Root keys}
 
-    Two schemes reach a root key from a mnemonic, and they disagree. Which one
-    a wallet used is not recoverable from the mnemonic, so it has to be known.
+    Two schemes reach a root key from a mnemonic, and they disagree. Which one a
+    wallet used is not recoverable from the mnemonic, so it has to be known.
     Icarus is what Daedalus, Yoroi, Eternl and the hardware wallets use for
     Shelley-era accounts, and it is the only one implemented here. *)
 
 module Icarus : sig
   val of_entropy : ?passphrase:string -> string -> (Xprv.t, error) result
   (** CIP-3 "Icarus" master key generation:
-      [PBKDF2-HMAC-SHA512(password = passphrase, salt = entropy, c = 4096,
-      dkLen = 96)], then the standard Ed25519 clamp on the first 32 bytes.
+      [PBKDF2-HMAC-SHA512(password = passphrase, salt = entropy, c = 4096, dkLen
+       = 96)], then the standard Ed25519 clamp on the first 32 bytes.
 
-      Note which way round the two inputs go. The passphrase is the {e
-      password} and the entropy is the {e salt} -- the opposite of BIP39's seed
+      Note which way round the two inputs go. The passphrase is the {e password}
+      and the entropy is the {e salt} -- the opposite of BIP39's seed
       derivation, and a mistake that produces a perfectly valid key for a wallet
       nobody else can find. [passphrase] defaults to [""].
 

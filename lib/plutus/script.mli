@@ -18,6 +18,7 @@
 type language = Native | Plutus_v1 | Plutus_v2 | Plutus_v3
 
 val language_tag : language -> char
+
 val language_id : language -> int
 (** [0], [1] and [2] for V1, V2 and V3 as they appear in a cost-model map.
     Native scripts have no id: they are not executed by the Plutus machine.

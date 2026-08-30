@@ -41,7 +41,8 @@ let uint_of = function
 
 let int_of v =
   let* n = uint_of v in
-  if Int64.unsigned_compare n (Int64.of_int max_int) <= 0 then Ok (Int64.to_int n)
+  if Int64.unsigned_compare n (Int64.of_int max_int) <= 0 then
+    Ok (Int64.to_int n)
   else err "integer does not fit in this runtime"
 
 let bytes_of = function C.Bytes b -> Ok b | _ -> err "expected a byte string"
@@ -70,7 +71,8 @@ module Input = struct
   let equal a b = compare a b = 0
   let pp ppf t = Format.fprintf ppf "%s#%d" (H.Tx_id.to_hex t.tx_id) t.index
 
-  let to_cbor t = C.Array [ C.Bytes (H.Tx_id.to_bytes t.tx_id); C.uint_of_int t.index ]
+  let to_cbor t =
+    C.Array [ C.Bytes (H.Tx_id.to_bytes t.tx_id); C.uint_of_int t.index ]
 
   let of_cbor = function
     | C.Array [ id; ix ] ->
@@ -95,7 +97,9 @@ module Value_codec = struct
       let by_policy = Hashtbl.create 8 in
       List.iter
         (fun ((a : T.asset), q) ->
-          let cur = try Hashtbl.find by_policy a.T.policy with Not_found -> [] in
+          let cur =
+            try Hashtbl.find by_policy a.T.policy with Not_found -> []
+          in
           Hashtbl.replace by_policy a.T.policy ((a.T.name, q) :: cur))
         (T.Multi_asset.to_list v.T.Value.assets);
       let policies =
@@ -103,7 +107,8 @@ module Value_codec = struct
           (Hashtbl.fold (fun k _ acc -> k :: acc) by_policy [])
       in
       C.Array
-        [ coin_cbor v.T.Value.coin;
+        [
+          coin_cbor v.T.Value.coin;
           C.Map
             (List.map
                (fun p ->
@@ -114,7 +119,8 @@ module Value_codec = struct
                           ( C.Bytes (T.Asset_name.to_bytes n),
                             C.Uint (T.Quantity.to_int64_unsigned q) ))
                         (List.rev (Hashtbl.find by_policy p))) ))
-               policies) ]
+               policies);
+        ]
 
   let of_cbor = function
     | (C.Uint _ | C.Nint _) as v ->
@@ -155,7 +161,8 @@ module Output = struct
     script_ref : string option;
   }
 
-  let make ?datum ?script_ref address value = { address; value; datum; script_ref }
+  let make ?datum ?script_ref address value =
+    { address; value; datum; script_ref }
 
   let pp ppf t =
     Format.fprintf ppf "%s -> %a"
@@ -167,17 +174,23 @@ module Output = struct
      and plenty of chain history uses the older one. *)
   let to_cbor t =
     let fields =
-      [ (C.Uint 0L, C.Bytes (Addr.to_bytes t.address));
-        (C.Uint 1L, Value_codec.to_cbor t.value) ]
+      [
+        (C.Uint 0L, C.Bytes (Addr.to_bytes t.address));
+        (C.Uint 1L, Value_codec.to_cbor t.value);
+      ]
       @ (match t.datum with
         | None -> []
         | Some (Datum.Hash h) ->
-            [ (C.Uint 2L, C.Array [ C.Uint 0L; C.Bytes (H.Datum_hash.to_bytes h) ]) ]
+            [
+              ( C.Uint 2L,
+                C.Array [ C.Uint 0L; C.Bytes (H.Datum_hash.to_bytes h) ] );
+            ]
         | Some (Datum.Inline b) ->
             [ (C.Uint 2L, C.Array [ C.Uint 1L; C.Tag (24, C.Bytes b) ]) ])
-      @ match t.script_ref with
-        | None -> []
-        | Some s -> [ (C.Uint 3L, C.Tag (24, C.Bytes s)) ]
+      @
+      match t.script_ref with
+      | None -> []
+      | Some s -> [ (C.Uint 3L, C.Tag (24, C.Bytes s)) ]
     in
     C.Map fields
 
@@ -192,13 +205,29 @@ module Output = struct
   let of_cbor = function
     | C.Map fields ->
         let find k =
-          List.find_map (fun (kk, v) -> if kk = C.Uint k then Some v else None) fields
+          List.find_map
+            (fun (kk, v) -> if kk = C.Uint k then Some v else None)
+            fields
         in
-        let* addr_b = match find 0L with Some v -> bytes_of v | None -> err "output has no address" in
-        let* address = Result.map_error (fun e -> Format.asprintf "%a" Addr.pp_error e) (Addr.of_bytes addr_b) in
-        let* value = match find 1L with Some v -> Value_codec.of_cbor v | None -> err "output has no value" in
+        let* addr_b =
+          match find 0L with
+          | Some v -> bytes_of v
+          | None -> err "output has no address"
+        in
+        let* address =
+          Result.map_error
+            (fun e -> Format.asprintf "%a" Addr.pp_error e)
+            (Addr.of_bytes addr_b)
+        in
+        let* value =
+          match find 1L with
+          | Some v -> Value_codec.of_cbor v
+          | None -> err "output has no value"
+        in
         let* datum =
-          match find 2L with None -> Ok None | Some v -> Result.map Option.some (datum_of v)
+          match find 2L with
+          | None -> Ok None
+          | Some v -> Result.map Option.some (datum_of v)
         in
         let* script_ref =
           match find 3L with
@@ -209,7 +238,11 @@ module Output = struct
         Ok { address; value; datum; script_ref }
     | C.Array (addr :: v :: rest) ->
         let* addr_b = bytes_of addr in
-        let* address = Result.map_error (fun e -> Format.asprintf "%a" Addr.pp_error e) (Addr.of_bytes addr_b) in
+        let* address =
+          Result.map_error
+            (fun e -> Format.asprintf "%a" Addr.pp_error e)
+            (Addr.of_bytes addr_b)
+        in
         let* value = Value_codec.of_cbor v in
         let* datum =
           match rest with
@@ -245,11 +278,22 @@ type t = {
 
 let empty =
   {
-    inputs = []; outputs = []; fee = T.Coin.zero; ttl = None;
-    validity_start = None; mint = None; network_id = None; collateral = [];
-    reference_inputs = []; required_signers = []; collateral_return = None;
-    total_collateral = None; script_data_hash = None; aux_data_hash = None;
-    carried = []; raw = None;
+    inputs = [];
+    outputs = [];
+    fee = T.Coin.zero;
+    ttl = None;
+    validity_start = None;
+    mint = None;
+    network_id = None;
+    collateral = [];
+    reference_inputs = [];
+    required_signers = [];
+    collateral_return = None;
+    total_collateral = None;
+    script_data_hash = None;
+    aux_data_hash = None;
+    carried = [];
+    raw = None;
   }
 
 let mint_cbor (m : T.Mint.t) =
@@ -311,18 +355,27 @@ let to_cbor t =
   | Some b -> b
   | None ->
       let opt k f = function None -> [] | Some v -> [ (C.Uint k, f v) ] in
-      let lst k f = function [] -> [] | xs -> [ (C.Uint k, encode_set (List.map f xs)) ] in
+      let lst k f = function
+        | [] -> []
+        | xs -> [ (C.Uint k, encode_set (List.map f xs)) ]
+      in
       let fields =
-        [ (C.Uint 0L, encode_set (List.map Input.to_cbor t.inputs));
+        [
+          (C.Uint 0L, encode_set (List.map Input.to_cbor t.inputs));
           (C.Uint 1L, C.Array (List.map Output.to_cbor t.outputs));
-          (C.Uint 2L, coin_cbor t.fee) ]
+          (C.Uint 2L, coin_cbor t.fee);
+        ]
         @ opt 3L (fun v -> C.Uint v) t.ttl
         @ opt 7L (fun h -> C.Bytes (H.Aux_data_hash.to_bytes h)) t.aux_data_hash
         @ opt 8L (fun v -> C.Uint v) t.validity_start
         @ opt 9L mint_cbor t.mint
-        @ opt 11L (fun h -> C.Bytes (H.Script_data_hash.to_bytes h)) t.script_data_hash
+        @ opt 11L
+            (fun h -> C.Bytes (H.Script_data_hash.to_bytes h))
+            t.script_data_hash
         @ lst 13L Input.to_cbor t.collateral
-        @ lst 14L (fun h -> C.Bytes (H.Addr_key_hash.to_bytes h)) t.required_signers
+        @ lst 14L
+            (fun h -> C.Bytes (H.Addr_key_hash.to_bytes h))
+            t.required_signers
         @ opt 15L (fun n -> C.uint_of_int (T.Network.id n)) t.network_id
         @ opt 16L Output.to_cbor t.collateral_return
         @ opt 17L coin_cbor t.total_collateral
@@ -338,22 +391,34 @@ let of_cbor s =
   match v with
   | C.Map fields ->
       let find k =
-        List.find_map (fun (kk, vv) -> if kk = C.Uint (Int64.of_int k) then Some vv else None) fields
+        List.find_map
+          (fun (kk, vv) ->
+            if kk = C.Uint (Int64.of_int k) then Some vv else None)
+          fields
       in
       (* Key 6 was Babbage's `update` field. Conway removed it. A body that
          carries one is not a Conway body, and quietly ignoring it would mean
          signing a structure whose meaning we have not modelled. *)
       if find 6 <> None then
-        err "body carries key 6 (update), which Conway removed -- this is not a Conway body"
+        err
+          "body carries key 6 (update), which Conway removed -- this is not a \
+           Conway body"
       else
-        let opt k f = match find k with None -> Ok None | Some v -> Result.map Option.some (f v) in
+        let opt k f =
+          match find k with
+          | None -> Ok None
+          | Some v -> Result.map Option.some (f v)
+        in
         let lst k f =
           match find k with
           | None -> Ok []
           | Some v ->
               let* items = as_list v in
               List.fold_left
-                (fun acc it -> let* acc = acc in let* x = f it in Ok (x :: acc))
+                (fun acc it ->
+                  let* acc = acc in
+                  let* x = f it in
+                  Ok (x :: acc))
                 (Ok []) items
               |> Result.map List.rev
         in
@@ -362,23 +427,38 @@ let of_cbor s =
           match find 1 with
           | Some (C.Array xs) ->
               List.fold_left
-                (fun acc it -> let* acc = acc in let* x = Output.of_cbor it in Ok (x :: acc))
+                (fun acc it ->
+                  let* acc = acc in
+                  let* x = Output.of_cbor it in
+                  Ok (x :: acc))
                 (Ok []) xs
               |> Result.map List.rev
           | Some _ -> err "outputs must be an array"
           | None -> err "body has no outputs"
         in
-        let* fee = match find 2 with Some v -> coin_of v | None -> err "body has no fee" in
+        let* fee =
+          match find 2 with
+          | Some v -> coin_of v
+          | None -> err "body has no fee"
+        in
         let* ttl = opt 3 uint_of in
-        let* aux_data_hash = opt 7 (fun v -> let* b = bytes_of v in H.Aux_data_hash.of_bytes b) in
+        let* aux_data_hash =
+          opt 7 (fun v ->
+              let* b = bytes_of v in
+              H.Aux_data_hash.of_bytes b)
+        in
         let* validity_start = opt 8 uint_of in
         let* mint = opt 9 mint_of in
         let* script_data_hash =
-          opt 11 (fun v -> let* b = bytes_of v in H.Script_data_hash.of_bytes b)
+          opt 11 (fun v ->
+              let* b = bytes_of v in
+              H.Script_data_hash.of_bytes b)
         in
         let* collateral = lst 13 Input.of_cbor in
         let* required_signers =
-          lst 14 (fun v -> let* b = bytes_of v in H.Addr_key_hash.of_bytes b)
+          lst 14 (fun v ->
+              let* b = bytes_of v in
+              H.Addr_key_hash.of_bytes b)
         in
         let* network_id =
           opt 15 (fun v ->
@@ -394,15 +474,30 @@ let of_cbor s =
               match k with
               | C.Uint n ->
                   let n = Int64.to_int n in
-                  if List.mem n [ 4; 5; 19; 20; 21; 22 ] then Some (n, v) else None
+                  if List.mem n [ 4; 5; 19; 20; 21; 22 ] then Some (n, v)
+                  else None
               | _ -> None)
             fields
         in
         Ok
-          { inputs; outputs; fee; ttl; validity_start; mint; network_id;
-            collateral; reference_inputs; required_signers; collateral_return;
-            total_collateral; script_data_hash; aux_data_hash; carried;
-            raw = Some s }
+          {
+            inputs;
+            outputs;
+            fee;
+            ttl;
+            validity_start;
+            mint;
+            network_id;
+            collateral;
+            reference_inputs;
+            required_signers;
+            collateral_return;
+            total_collateral;
+            script_data_hash;
+            aux_data_hash;
+            carried;
+            raw = Some s;
+          }
   | _ -> err "transaction_body is a map"
 
 let id t =

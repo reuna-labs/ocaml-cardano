@@ -6,7 +6,10 @@ module type S = sig
   val bind : 'a io -> ('a -> 'b io) -> 'b io
 
   val request :
-    t -> method_:string -> params:Yojson.Safe.t option -> id:int ->
+    t ->
+    method_:string ->
+    params:Yojson.Safe.t option ->
+    id:int ->
     (Yojson.Safe.t, Error.t) result io
 end
 
@@ -31,7 +34,8 @@ let next_id =
 module Make (P : S) = struct
   let call t m =
     P.bind
-      (P.request t ~method_:(Method.name m) ~params:(Method.params m) ~id:(next_id ()))
+      (P.request t ~method_:(Method.name m) ~params:(Method.params m)
+         ~id:(next_id ()))
       (fun r -> P.return (Result.bind r (Method.decode m)))
 end
 

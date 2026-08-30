@@ -16,7 +16,7 @@
 module Fake_flow = struct
   type flow = {
     sent : Buffer.t;
-    body : string;  (* with %ID% where the request id belongs *)
+    body : string; (* with %ID% where the request id belongs *)
     pieces : int;
     mutable pending : string list;
     mutable answer : bool;
@@ -47,7 +47,9 @@ module Fake_flow = struct
     | Some j ->
         let n = String.length s in
         let k = ref j in
-        while !k < n && s.[!k] >= '0' && s.[!k] <= '9' do incr k done;
+        while !k < n && s.[!k] >= '0' && s.[!k] <= '9' do
+          incr k
+        done;
         String.sub s j (!k - j)
 
   let substitute template id =
@@ -118,9 +120,11 @@ let query_over_a_flow () =
         let rec go i = i + m <= n && (String.sub sent i m = s || go (i + 1)) in
         go 0
       in
-      Alcotest.(check bool) "and a well-formed request went out" true
-        (contains "POST / HTTP/1.1" && contains "Host: ogmios.local"
-         && contains {|"method":"queryLedgerState/epoch"|})
+      Alcotest.(check bool)
+        "and a well-formed request went out" true
+        (contains "POST / HTTP/1.1"
+        && contains "Host: ogmios.local"
+        && contains {|"method":"queryLedgerState/epoch"|})
   | Error e -> Alcotest.failf "%a" Cardano_rpc.Error.pp e
 
 (* A node that answers a different question must not be believed. *)
@@ -156,8 +160,15 @@ let umbrella_is_offline_only () =
 
 let () =
   Alcotest.run "cardano-flow-client"
-    [ ("over a flow",
-       [ Alcotest.test_case "typed query" `Quick query_over_a_flow;
-         Alcotest.test_case "mismatched reply" `Quick mismatched_reply_is_caught;
-         Alcotest.test_case "transport failure" `Quick transport_failure_is_typed ]);
-      ("packaging", [ Alcotest.test_case "umbrella" `Quick umbrella_is_offline_only ]) ]
+    [
+      ( "over a flow",
+        [
+          Alcotest.test_case "typed query" `Quick query_over_a_flow;
+          Alcotest.test_case "mismatched reply" `Quick
+            mismatched_reply_is_caught;
+          Alcotest.test_case "transport failure" `Quick
+            transport_failure_is_typed;
+        ] );
+      ( "packaging",
+        [ Alcotest.test_case "umbrella" `Quick umbrella_is_offline_only ] );
+    ]

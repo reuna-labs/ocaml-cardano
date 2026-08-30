@@ -33,9 +33,9 @@ end
 type t = {
   vkeys : Vkey.t list;
   carried : (int * Web3_codec_cbor.t) list;
-      (** Witness-set fields this release does not interpret, by CDDL key:
-          1 native scripts, 2 bootstrap witnesses, 3/6/7 Plutus scripts,
-          4 datums, 5 redeemers. *)
+      (** Witness-set fields this release does not interpret, by CDDL key: 1
+          native scripts, 2 bootstrap witnesses, 3/6/7 Plutus scripts, 4 datums,
+          5 redeemers. *)
   raw : string option;
 }
 

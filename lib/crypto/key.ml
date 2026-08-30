@@ -58,8 +58,10 @@ end = struct
   let raw t = String.sub (to_bytes t) 0 32
 
   let hash t =
-    match Cardano_types.Hash.Addr_key_hash.of_bytes
-            (Cardano_types.blake2b224 (raw t)) with
+    match
+      Cardano_types.Hash.Addr_key_hash.of_bytes
+        (Cardano_types.blake2b224 (raw t))
+    with
     | Ok h -> h
     | Error m -> invalid_arg ("Key.Xpub.hash: " ^ m)
 
@@ -118,20 +120,30 @@ module Icarus = struct
      that a Solo5 duniverse stays small. *)
   let pbkdf2_hmac_sha512 ~password ~salt ~count ~dk_len =
     let hlen = 64 in
-    let hmac ~key data = Digestif.SHA512.(to_raw_string (hmac_string ~key data)) in
-    let xor a b = String.init hlen (fun i -> Char.chr (Char.code a.[i] lxor Char.code b.[i])) in
+    let hmac ~key data =
+      Digestif.SHA512.(to_raw_string (hmac_string ~key data))
+    in
+    let xor a b =
+      String.init hlen (fun i ->
+          Char.chr (Char.code a.[i] lxor Char.code b.[i]))
+    in
     let block i =
       let be = Bytes.create 4 in
       Bytes.set_int32_be be 0 (Int32.of_int i);
       let u1 = hmac ~key:password (salt ^ Bytes.unsafe_to_string be) in
-      let rec go n u acc = if n = 0 then acc
-        else let u' = hmac ~key:password u in go (n - 1) u' (xor acc u')
+      let rec go n u acc =
+        if n = 0 then acc
+        else
+          let u' = hmac ~key:password u in
+          go (n - 1) u' (xor acc u')
       in
       go (count - 1) u1 u1
     in
     let n = (dk_len + hlen - 1) / hlen in
     let buf = Buffer.create (n * hlen) in
-    for i = 1 to n do Buffer.add_string buf (block i) done;
+    for i = 1 to n do
+      Buffer.add_string buf (block i)
+    done;
     String.sub (Buffer.contents buf) 0 dk_len
 
   let of_entropy ?(passphrase = "") entropy =
@@ -152,6 +164,6 @@ module Icarus = struct
          derivation performs. *)
       let set i v = Bytes.set b i (Char.chr v) in
       set 0 (Char.code (Bytes.get b 0) land 0xf8);
-      set 31 ((Char.code (Bytes.get b 31) land 0x1f) lor 0x40);
+      set 31 (Char.code (Bytes.get b 31) land 0x1f lor 0x40);
       Xprv.of_bytes (Bytes.unsafe_to_string b)
 end

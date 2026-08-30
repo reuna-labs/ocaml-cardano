@@ -2,8 +2,8 @@
 
     {1 Why a state machine}
 
-    Submitting a Cardano transaction is not one request. It may need the tip
-    (to know whether the validity interval has passed), an evaluation round (to
+    Submitting a Cardano transaction is not one request. It may need the tip (to
+    know whether the validity interval has passed), an evaluation round (to
     learn what the scripts cost), a rebuild and re-sign after that, the
     submission itself, and then repeated polling to decide it has really
     happened. Each of those can fail in a way that changes what to do next.
@@ -88,8 +88,9 @@ type action =
           machine cannot do it: it holds no keys, by design. *)
   | Submit of string
   | Check_inputs of Cardano_transaction.Body.Input.t list
-  | Wait  (** Nothing to do until the chain moves. The caller decides how long
-              to pause; a unikernel with no clock can simply poll again. *)
+  | Wait
+      (** Nothing to do until the chain moves. The caller decides how long to
+          pause; a unikernel with no clock can simply poll again. *)
   | Finished of outcome
 
 type event =
@@ -107,6 +108,7 @@ type t
 
 val start : config -> prepared -> t
 val action : t -> action
+
 val advance : t -> event -> (t, string) result
 (** [Error] only for an event that makes no sense in the current state -- a
     driver bug, not a chain condition. Everything the chain can do is an

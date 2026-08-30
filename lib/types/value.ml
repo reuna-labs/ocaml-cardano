@@ -23,7 +23,8 @@ module Asset_name = struct
 
   let to_hex t =
     String.concat ""
-      (List.map (fun c -> Printf.sprintf "%02x" (Char.code c))
+      (List.map
+         (fun c -> Printf.sprintf "%02x" (Char.code c))
          (List.init (String.length t) (String.get t)))
 
   let printable t =
@@ -53,7 +54,8 @@ module Quantity = struct
   let one = 1L
 
   let of_int64_unsigned v =
-    if v = 0L then Error "quantity: zero is not representable in a value" else Ok v
+    if v = 0L then Error "quantity: zero is not representable in a value"
+    else Ok v
 
   let of_int n =
     if n <= 0 then Error "quantity: must be positive" else Ok (Int64.of_int n)
@@ -71,7 +73,8 @@ module Quantity = struct
     if ucmp r a < 0 then Error "quantity: addition overflowed 2^64" else Ok r
 
   let sub a b =
-    if ucmp a b <= 0 then Error "quantity: subtraction would reach zero or below"
+    if ucmp a b <= 0 then
+      Error "quantity: subtraction would reach zero or below"
     else Ok (Int64.sub a b)
 
   let compare = ucmp
@@ -144,13 +147,17 @@ module Value = struct
     | Error e -> Error (Format.asprintf "%a" Coin.pp_error e)
 
   let add a b =
-    Result.bind (coin_err (Coin.add a.coin b.coin)) (fun coin ->
+    Result.bind
+      (coin_err (Coin.add a.coin b.coin))
+      (fun coin ->
         Result.map
           (fun assets -> { coin; assets })
           (Multi_asset.add a.assets b.assets))
 
   let sub a b =
-    Result.bind (coin_err (Coin.sub a.coin b.coin)) (fun coin ->
+    Result.bind
+      (coin_err (Coin.sub a.coin b.coin))
+      (fun coin ->
         let rec go acc = function
           | [] -> Ok acc
           | (asset, q) :: rest -> (
@@ -171,7 +178,9 @@ module Value = struct
             (fun (asset, _) -> Multi_asset.find b.assets asset = None)
             (Multi_asset.to_list a.assets)
         in
-        Result.bind (go kept (Multi_asset.to_list b.assets)) (fun l ->
+        Result.bind
+          (go kept (Multi_asset.to_list b.assets))
+          (fun l ->
             Result.map (fun assets -> { coin; assets }) (Multi_asset.of_list l)))
 
   let contains a b =

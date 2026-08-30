@@ -3,9 +3,7 @@
    screen, it is a transaction that moves the wrong quantity. *)
 
 type t = int64
-
-type error =
-  [ `Overflow of string | `Invalid_range | `Invalid_format ]
+type error = [ `Overflow of string | `Invalid_range | `Invalid_format ]
 
 let pp_error ppf = function
   | `Overflow op -> Format.fprintf ppf "coin: %s overflowed" op
@@ -20,7 +18,6 @@ let lovelace_per_ada = 1_000_000L
 let max_supply_i64 = 45_000_000_000_000_000L
 let zero = 0L
 let max_supply = max_supply_i64
-
 let in_range v = v >= 0L && v <= max_supply_i64
 let of_lovelace v = if in_range v then Ok v else Error `Invalid_range
 let to_lovelace t = t
@@ -31,7 +28,9 @@ let of_lovelace_exn v =
 
 let add a b =
   let r = Int64.add a b in
-  if r < a then Error (`Overflow "add") else if in_range r then Ok r else Error `Invalid_range
+  if r < a then Error (`Overflow "add")
+  else if in_range r then Ok r
+  else Error `Invalid_range
 
 let sub a b = if b > a then Error (`Overflow "sub") else Ok (Int64.sub a b)
 
@@ -67,7 +66,9 @@ let to_ada_string t =
   else
     let s = Printf.sprintf "%06Ld" frac in
     let last = ref (String.length s - 1) in
-    while !last > 0 && s.[!last] = '0' do decr last done;
+    while !last > 0 && s.[!last] = '0' do
+      decr last
+    done;
     Printf.sprintf "%Ld.%s" whole (String.sub s 0 (!last + 1))
 
 let of_ada_string s =
@@ -80,7 +81,9 @@ let of_ada_string s =
       | None -> (s, "")
       | Some i -> (String.sub s 0 i, String.sub s (i + 1) (n - i - 1))
     in
-    let digits x = x <> "" && String.for_all (function '0' .. '9' -> true | _ -> false) x in
+    let digits x =
+      x <> "" && String.for_all (function '0' .. '9' -> true | _ -> false) x
+    in
     if not (digits whole_s) then Error `Invalid_format
     else if String.length frac_s > 6 then Error `Invalid_format
     else if frac_s <> "" && not (digits frac_s) then Error `Invalid_format
