@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: [self-hosted, Linux, X64, reuna-builder-x86]
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
@@ -15,35 +15,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Are the private prerequisites reachable?
-        id: creds
-        env:
-          TOKEN: ${{ secrets.REUNA_CI_TOKEN }}
-        run: |
-          if [ -n "$TOKEN" ]; then
-            echo "ok=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "ok=false" >> "$GITHUB_OUTPUT"
-            echo "::notice title=Build skipped::REUNA_CI_TOKEN is not configured"
-          fi
-
-      - name: Let git reach private Reuna repositories
-        if: steps.creds.outputs.ok == 'true'
-        env:
-          TOKEN: ${{ secrets.REUNA_CI_TOKEN }}
-        run: |
-          git config --global \
-            url."https://x-access-token:${TOKEN}@github.com/".insteadOf \
-            "https://github.com/"
-
       - uses: ocaml/setup-ocaml@v3
-        if: steps.creds.outputs.ok == 'true'
         with:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
           opam-local-packages: "*.opam"
 
       - name: Build the GMP prerequisite without host privileges
-        if: steps.creds.outputs.ok == 'true'
         env:
           GMP_VERSION: "6.3.0"
           GMP_SHA256: a3c2b80201b89e68616f4ad30bc66aee4927c3ce50e33929ca819d5c43538898
@@ -66,8 +43,7 @@ jobs:
           echo "LD_LIBRARY_PATH=$gmp_prefix/lib" >> "$GITHUB_ENV"
           echo "PKG_CONFIG_PATH=$gmp_prefix/lib/pkgconfig" >> "$GITHUB_ENV"
 
-      - name: Pin the private prerequisite wave
-        if: steps.creds.outputs.ok == 'true'
+      - name: Pin the tagged prerequisite wave
         run: |
           M=git+https://github.com/reuna-labs/mirage-crypto.git#v2.4.0-reuna1
           C=git+https://github.com/reuna-labs/ocaml-web3-codec.git#v0.1.0-alpha1
@@ -78,19 +54,14 @@ jobs:
           opam pin add -yn web3-codec-base58.dev "$C"
           opam pin add -yn web3-codec-cbor.dev "$C"
 
-      - if: steps.creds.outputs.ok == 'true'
-        run: opam install -y --assume-depexts --deps-only --with-test .
+      - run: opam install -y --assume-depexts --deps-only --with-test .
 
-      - if: steps.creds.outputs.ok == 'true'
-        run: opam exec -- dune build @install
+      - run: opam exec -- dune build @install
 
-      - if: steps.creds.outputs.ok == 'true'
-        run: opam exec -- dune runtest
+      - run: opam exec -- dune runtest
 
       - name: Keep the offline package boundary intact
-        if: steps.creds.outputs.ok == 'true'
         run: opam exec -- ./test/no_io_guard.sh
 
       - name: Formatting
-        if: steps.creds.outputs.ok == 'true'
         run: opam exec -- dune build @fmt
