@@ -64,4 +64,7 @@ jobs:
         run: opam exec -- ./test/no_io_guard.sh
 
       - name: Formatting
+        run: opam install -y ocamlformat.0.28.1
+
+      - name: Formatting check
         run: opam exec -- dune build @fmt
