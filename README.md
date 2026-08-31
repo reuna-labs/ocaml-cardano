@@ -9,8 +9,20 @@ minimum-UTXO calculation, and a typed [Ogmios](https://ogmios.dev) client.
 
 ## Status
 
-Early. Nothing is released. `docs/conway-spec-pin.md` records exactly which
-ledger revision and which Ogmios version this targets.
+Public `v0.1.0-alpha2`. `docs/conway-spec-pin.md` records exactly which ledger
+revision and which Ogmios version this targets. The 75-test suite and hosted
+OCaml 4.14.2/5.2.1 matrix pass; live Preview evidence remains outstanding.
+
+## Install
+
+```sh
+opam repository add reuna https://github.com/reuna-labs/opam-repository.git
+opam update
+opam install cardano-rpc-unix.0.1.0~alpha2
+```
+
+This installs the hosted client and its offline sibling packages from immutable
+release archives. No development pins are required.
 
 ## Design
 
