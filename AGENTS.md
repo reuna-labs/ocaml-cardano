@@ -61,7 +61,7 @@ own copy until the codec package is sliced. See `lib/address/bech32.mli`.
 ## Design docs
 
 - `../vault/Reuna/SDD/` — component design documents
-- `../vault/Reuna/Platryx HLD.md` — how the components fit together
+- `../vault/Reuna/Reuna HLD.md` — how the components fit together
 
 ## Helper toolkits — `~/gilbahat`
 
