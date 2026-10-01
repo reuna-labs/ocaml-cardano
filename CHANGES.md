@@ -1,3 +1,11 @@
+## Unreleased
+
+- Move the complete Cardano key pipeline to `mirage-crypto-ed25519-bip32`, using
+  selected Cardano/Crypton reference C and the shared Digestif SHA512 kernel.
+- Remove local PBKDF2 and direct EC/blockchain-core dependencies.
+- Enforce private scalar bit constraints and canonical, nonidentity,
+  prime-subgroup wallet public imports. Preserve raw transaction verification.
+
 # Changes
 
 ## 0.1.0~alpha1 (unreleased)

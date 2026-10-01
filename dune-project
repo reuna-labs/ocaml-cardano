@@ -6,12 +6,8 @@
 
 (generate_opam_files true)
 
-; Careful: the *.opam files are generated from this one, but cardano.opam also
-; carries a hand-maintained `pin-depends:` block that dune cannot express.
-; Regenerating drops it, and the drop is silent -- the package still solves,
-; just against released mirage-crypto instead of the fork that provides
-; Ed25519.Primitive. Re-add it after any regeneration. ocaml-bitcoin and
-; ocaml-mpc carry the same hazard; ocaml-cometbft gave up on generation over it.
+; Development pins are maintained in cardano.opam.template and included by Dune.
+; They pin the native Ed25519-BIP32 package and its matching Digestif C header.
 
 (implicit_transitive_deps false)
 
@@ -60,9 +56,7 @@
   (ocaml (>= 4.14))
   (dune (>= 3.6))
   (cardano-types (= :version))
-  (digestif (>= 1.2.0))
-  (mirage-crypto-ec (>= 2.1.0))
-  mirage-crypto-blockchain-core
+  mirage-crypto-ed25519-bip32
   (alcotest :with-test)))
 
 (package

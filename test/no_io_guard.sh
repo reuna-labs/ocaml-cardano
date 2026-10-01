@@ -7,7 +7,7 @@ set -eu
 
 OFFLINE="cardano-types cardano-address cardano-crypto cardano-plutus cardano-plutus-vm cardano-transaction cardano-rpc cardano"
 FLOW="cardano-rpc-flow"
-OFFLINE_FORBIDDEN="unix threads lwt lwt.unix async cohttp cohttp-lwt cohttp-lwt-unix conduit conduit-lwt conduit-lwt-unix mirage-flow mirage-flow-unix tcpip zarith"
+OFFLINE_FORBIDDEN="unix threads lwt lwt.unix async cohttp cohttp-lwt cohttp-lwt-unix conduit conduit-lwt conduit-lwt-unix mirage-flow mirage-flow-unix tcpip zarith mirage-crypto-rng mirage-crypto-ec mirage-crypto-blockchain-core mirage-crypto-blockchain"
 FLOW_FORBIDDEN="unix threads lwt.unix async cohttp-lwt-unix conduit-lwt-unix mirage-flow-unix h2-lwt-unix h2-mirage tcpip conduit-mirage"
 
 status=0

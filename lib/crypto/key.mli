@@ -10,8 +10,11 @@
     Signing is the ordinary Ed25519 equation over that extended key, so any RFC
     8032 verifier accepts the signatures.
 
-    {b Not constant time.} Derivation does plain byte arithmetic on secret
-    scalars and inherits variable-time point decoding. See [SECURITY.md]. *)
+    Native key derivation, signing and Icarus PBKDF2 use selected Cardano and
+    Crypton reference C through [mirage-crypto-ed25519-bip32]. Whole-protocol
+    constant-time behavior has not independently been verified. Native secret
+    temporaries are wiped where practical; OCaml heap copies cannot be
+    guaranteed erased. *)
 
 type error =
   [ `Invalid_length of int
@@ -28,6 +31,8 @@ module Xpub : sig
   (** [A ‖ chain code], 64 bytes. *)
 
   val of_bytes : string -> (t, error) result
+  (** Reject noncanonical, identity and non-prime-subgroup public points. *)
+
   val to_bytes : t -> string
 
   val derive : t -> int32 -> (t, error) result
@@ -50,6 +55,9 @@ module Xprv : sig
   (** [kL ‖ kR ‖ chain code], 96 bytes. *)
 
   val of_bytes : string -> (t, error) result
+  (** Require kL's low three bits and bit 255 clear, bit 254 set. Bit 253 is
+      allowed for child keys. Imported bytes are never reclamped. *)
+
   val to_bytes : t -> string
 
   val derive : t -> int32 -> (t, error) result
@@ -84,7 +92,8 @@ module Icarus : sig
   val of_entropy : ?passphrase:string -> string -> (Xprv.t, error) result
   (** CIP-3 "Icarus" master key generation:
       [PBKDF2-HMAC-SHA512(password = passphrase, salt = entropy, c = 4096, dkLen
-       = 96)], then the standard Ed25519 clamp on the first 32 bytes.
+       = 96)], then the Icarus clamp (including clearing bit 253) on the first
+      32 bytes.
 
       Note which way round the two inputs go. The passphrase is the {e password}
       and the entropy is the {e salt} -- the opposite of BIP39's seed

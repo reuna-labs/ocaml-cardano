@@ -11,9 +11,7 @@ depends: [
   "ocaml" {>= "4.14"}
   "dune" {>= "3.6" & >= "3.6"}
   "cardano-types" {= version}
-  "digestif" {>= "1.2.0"}
-  "mirage-crypto-ec" {>= "2.1.0"}
-  "mirage-crypto-blockchain-core"
+  "mirage-crypto-ed25519-bip32"
   "alcotest" {with-test}
   "odoc" {with-doc}
 ]

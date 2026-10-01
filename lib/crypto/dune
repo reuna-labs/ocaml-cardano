@@ -3,6 +3,4 @@
  (public_name cardano-crypto)
  (libraries
   cardano-types
-  digestif
-  mirage-crypto-ec
-  mirage-crypto-blockchain-core))
+  mirage-crypto-ed25519-bip32))

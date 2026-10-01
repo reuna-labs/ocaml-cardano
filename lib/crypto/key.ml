@@ -1,11 +1,6 @@
-(* BIP32-Ed25519 keys.
+(* Native Cardano reference V2/Icarus backend; no RNG or host dependencies. *)
 
-   The derivation itself comes from Mirage_crypto_blockchain_core, which
-   implements DerivationScheme V2 cross-checked against rust-ed25519-bip32.
-   What is added here is the Cardano-specific way in: the Icarus master key,
-   which the paper's own scheme does not describe. *)
-
-module B = Mirage_crypto_blockchain_core.Ed25519_bip32
+module B = Mirage_crypto_ed25519_bip32
 
 type error =
   [ `Invalid_length of int
@@ -69,7 +64,7 @@ end = struct
 end
 
 module Xprv : sig
-  type t
+  type t = B.extended_priv
 
   val of_bytes : string -> (t, error) result
   val to_bytes : t -> string
@@ -105,65 +100,10 @@ end = struct
   let sign t msg = B.sign ~key:t msg
 end
 
-let verify_raw ~vkey ~signature msg =
-  String.length vkey = 32
-  && String.length signature = 64
-  &&
-  match Mirage_crypto_ec.Ed25519.pub_of_octets vkey with
-  | Error _ -> false
-  | Ok key -> Mirage_crypto_ec.Ed25519.verify ~key signature ~msg
+let verify_raw ~vkey ~signature msg = B.verify_raw ~key:vkey signature ~msg
 
 module Icarus = struct
-  (* PBKDF2-HMAC-SHA512. Written here rather than pulled from the `pbkdf`
-     package: it is fifteen lines over digestif's HMAC, and this library's
-     offline closure is deliberately kept to digestif and mirage-crypto-ec so
-     that a Solo5 duniverse stays small. *)
-  let pbkdf2_hmac_sha512 ~password ~salt ~count ~dk_len =
-    let hlen = 64 in
-    let hmac ~key data =
-      Digestif.SHA512.(to_raw_string (hmac_string ~key data))
-    in
-    let xor a b =
-      String.init hlen (fun i ->
-          Char.chr (Char.code a.[i] lxor Char.code b.[i]))
-    in
-    let block i =
-      let be = Bytes.create 4 in
-      Bytes.set_int32_be be 0 (Int32.of_int i);
-      let u1 = hmac ~key:password (salt ^ Bytes.unsafe_to_string be) in
-      let rec go n u acc =
-        if n = 0 then acc
-        else
-          let u' = hmac ~key:password u in
-          go (n - 1) u' (xor acc u')
-      in
-      go (count - 1) u1 u1
-    in
-    let n = (dk_len + hlen - 1) / hlen in
-    let buf = Buffer.create (n * hlen) in
-    for i = 1 to n do
-      Buffer.add_string buf (block i)
-    done;
-    String.sub (Buffer.contents buf) 0 dk_len
-
   let of_entropy ?(passphrase = "") entropy =
-    let n = String.length entropy in
-    if n < 16 || n > 32 then Error (`Invalid_length n)
-    else
-      (* CIP-3: the passphrase is the password and the entropy is the salt.
-         BIP39's seed function has them the other way round, and swapping them
-         yields a valid key for a wallet nobody else will ever look in. *)
-      let dk =
-        pbkdf2_hmac_sha512 ~password:passphrase ~salt:entropy ~count:4096
-          ~dk_len:96
-      in
-      let b = Bytes.of_string dk in
-      (* The standard Ed25519 clamp: clear the low three bits of the first byte
-         so the scalar is a multiple of the cofactor, and fix bits 6 and 7 of
-         the last byte of kL so it stays in range under the additions that
-         derivation performs. *)
-      let set i v = Bytes.set b i (Char.chr v) in
-      set 0 (Char.code (Bytes.get b 0) land 0xf8);
-      set 31 (Char.code (Bytes.get b 31) land 0x1f lor 0x40);
-      Xprv.of_bytes (Bytes.unsafe_to_string b)
+    lift ~len:(String.length entropy)
+      (B.icarus_key_of_entropy ~passphrase entropy)
 end

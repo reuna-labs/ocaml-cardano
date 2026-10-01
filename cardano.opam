@@ -34,36 +34,17 @@ build: [
   ]
 ]
 dev-repo: "git+https://github.com/reuna-labs/ocaml-cardano.git"
-# DEVELOPMENT ONLY -- delete this file before submitting to opam-repository.
-#
-# Mirage_crypto_ec.Ed25519.Primitive, and mirage-crypto-blockchain-core, are
-# additions in the Reuna fork and are not yet upstream. This block lets a
-# standalone `opam install --deps-only .` resolve them.
-#
-# The release branch is shared with the other web3 packages so every package
-# in the Mirage-crypto family resolves to one tested source revision. The
-# private pin is removed from the opam-repository submission after that
-# prerequisite has a public archive and versioned package metadata.
+# DEVELOPMENT ONLY -- remove before submitting to opam-repository.
+# Native Cardano reference C and its matching shared Digestif SHA512 header.
+# Revisions are published and tested together; no EC/RNG/blockchain umbrella.
 pin-depends: [
   [
-    "mirage-crypto.dev"
-    "git+https://github.com/reuna-labs/mirage-crypto.git#v2.4.0-reuna1"
-  ]
-  [
-    "mirage-crypto-rng.dev"
-    "git+https://github.com/reuna-labs/mirage-crypto.git#v2.4.0-reuna1"
-  ]
-  [
-    "mirage-crypto-ec.dev"
-    "git+https://github.com/reuna-labs/mirage-crypto.git#v2.4.0-reuna1"
-  ]
-  [
-    "mirage-crypto-blockchain-core.dev"
-    "git+https://github.com/reuna-labs/mirage-crypto.git#v2.4.0-reuna1"
+    "mirage-crypto-ed25519-bip32.dev"
+    "git+https://github.com/reuna-labs/mirage-crypto.git#a81f623ab6235f5c734e02bbdb8232cb742db73e"
   ]
   [
     "digestif.1.4.0"
-    "git+https://github.com/reuna-labs/digestif.git#v1.4.0-alpha1"
+    "git+https://github.com/reuna-labs/digestif.git#4c33049713a1449ab5066ebe286a9c6f763d32b6"
   ]
   [
     "web3-codec-basen.0.1.0~alpha1"

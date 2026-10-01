@@ -114,3 +114,20 @@ cap. When the codec package is sliced it moves upstream and this copy goes away.
 ## Licence
 
 ISC. See [`LICENSE`](LICENSE).
+
+### Native Cardano key backend
+
+`cardano-crypto` uses `mirage-crypto-ed25519-bip32`: selected Cardano reference C
+for V2 derivation, public keys and extended signing, plus Crypton SHA512 PBKDF2
+for Icarus. Digestif supplies the shared SHA512 kernel. No RNG, Unix, Zarith,
+GMP, ctypes or system cryptographic library is in this key pipeline.
+
+Wallet imports are strict: xprv kL must have its low three bits clear, bit 255
+clear and bit 254 set (bit 253 is allowed for child keys). Xpub points must be
+canonical, nonidentity and in the prime-order subgroup. Imports never reclamp
+keys. Transaction `verify_raw` preserves the former Mirage acceptance policy,
+including canonical S; wallet import restrictions are not applied to it.
+
+This removes the OCaml secret arithmetic and PBKDF2 loop. The reference code
+and integration are not formally verified constant-time. Native buffer wiping
+does not guarantee erasure of OCaml heap copies.

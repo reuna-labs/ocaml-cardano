@@ -363,6 +363,34 @@ let signing () =
     (String.length
        (Cardano_types.Hash.Addr_key_hash.to_bytes (K.Xpub.hash pub)))
 
+let strict_imports () =
+  let root = getk (K.Icarus.of_entropy icarus_entropy) in
+  let raw = K.Xprv.to_bytes root in
+  let malformed = Bytes.of_string raw in
+  Bytes.set malformed 0 (Char.chr (Char.code raw.[0] lor 1));
+  Alcotest.(check bool)
+    "reject bad scalar bits" true
+    (K.Xprv.of_bytes (Bytes.to_string malformed) = Error `Invalid_format);
+  let child_bits = Bytes.of_string raw in
+  Bytes.set child_bits 31 (Char.chr (Char.code raw.[31] lor 32));
+  Alcotest.(check string)
+    "preserve child bit 253"
+    (Bytes.to_string child_bits)
+    (K.Xprv.to_bytes (getk (K.Xprv.of_bytes (Bytes.to_string child_bits))));
+  let identity = "\001" ^ String.make 31 '\000' in
+  Alcotest.(check bool)
+    "reject identity wallet key" true
+    (K.Xpub.of_bytes (identity ^ String.make 32 '\000') = Error `Invalid_format);
+  Alcotest.(check bool)
+    "raw verification retains legacy policy" true
+    (K.verify_raw ~vkey:identity
+       ~signature:(identity ^ String.make 32 '\000')
+       "raw");
+  let pub = K.Xprv.public root in
+  Alcotest.(check bool)
+    "reject hardened public derivation" true
+    (K.Xpub.derive pub Int32.min_int = Error `Hardened_from_public)
+
 let paths () =
   let p = getp (P.address ~account:0l ~role:P.External ~index:5l) in
   Alcotest.(check string)
@@ -413,6 +441,7 @@ let () =
         [
           Alcotest.test_case "derivation" `Quick derivation;
           Alcotest.test_case "signing" `Quick signing;
+          Alcotest.test_case "strict imports" `Quick strict_imports;
         ] );
       ("cip-1852", [ Alcotest.test_case "paths" `Quick paths ]);
     ]

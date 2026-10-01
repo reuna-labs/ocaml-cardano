@@ -102,3 +102,12 @@ A credential for the private `reuna-labs` remotes is required; see
 Writing that script properly is worth doing, but it belongs at the root of the
 tree rather than in this repository, alongside `rebuild-opam-switches.sh` —
 which today creates only per-repo switches and does not know this one exists.
+
+## Native Ed25519-BIP32 migration
+
+The current `cardano-crypto` requires `mirage-crypto-ed25519-bip32` and the
+matching Digestif SHA512 C header, pinned in `cardano.opam.template`. The
+historical EC/blockchain-core dependencies above describe the previous build.
+Validate the new dependency set in an isolated prefix before changing the shared
+switch; the additive-only rule still applies. No shared-switch upgrade is part
+of this migration.
