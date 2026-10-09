@@ -1,6 +1,4 @@
 (library
  (name cardano_crypto)
  (public_name cardano-crypto)
- (libraries
-  cardano-types
-  mirage-crypto-ed25519-bip32))
+ (libraries cardano-types mirage-crypto-ed25519-bip32))
