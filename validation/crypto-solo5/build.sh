@@ -1,7 +1,7 @@
 #!/bin/sh
 # Linux switch with ocaml-solo5, Solo5, dune and eqaf; source builds only.
 set -eu
-REPO=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)
+REPO=$(CDPATH='' cd -- "$(dirname "$0")/../.." && pwd)
 MIRAGE_CRYPTO_SOURCE=${MIRAGE_CRYPTO_SOURCE:-"$REPO/../../ports/ocaml/mirage-crypto"}
 DIGESTIF_SOURCE=${DIGESTIF_SOURCE:-"$REPO/../../ports/ocaml/digestif"}
 CODEC_SOURCE=${CODEC_SOURCE:-"$REPO/../ocaml-web3-codec"}

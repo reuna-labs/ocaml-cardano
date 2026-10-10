@@ -1,0 +1,17 @@
+# reuna-gate configuration; see ~/reuna/infra/gates/README.md.
+
+[secrets]
+# test/test_cardano.ml pins the CIP-0003 Icarus key-derivation vectors (public,
+# from the CIP itself). trufflehog's PhraseAccessToken detector reads the two
+# 64-hex expected-key strings next to the word "passphrase" as tokens. An
+# in-line `trufflehog:ignore` cannot stay put: the strings already fill the
+# line and ocamlformat moves a trailing comment onto the next one.
+exclude = ['^test/test_cardano\.ml$']
+
+[ocaml]
+# Not a code finding: the switch this repository builds in cannot run it.
+# Re-enable once reuna-5.5 is restored additively (see ~/reuna/AGENTS.md,
+# Gotchas). Checked by hand on 2026-10-10: `dune build @fmt` is clean with
+# ocamlformat 0.28.1.
+enabled = false
+reason = "reuna-5.5 lacks mirage-crypto-ed25519-bip32 (runtest cannot build) and has ocamlformat 0.29.0, not the 0.28.1 .ocamlformat pins"
