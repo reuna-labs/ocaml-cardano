@@ -73,6 +73,15 @@ dune build @all @runtest
 `dune runtest` never touches the network. Set `CARDANO_ENABLE_NETWORK_TESTS=1`
 only when deliberately running the Preview smoke.
 
+`tools/preprod-check.sh` is public-testnet evidence for the published packages
+and needs no funds. It installs `cardano-transaction` from the Reuna opam
+overlay in a pinned container and signs a payment from a fresh key, spending
+someone else's unspent preprod output. Preprod's ledger, reached through Koios,
+must refuse it for the owner's missing witness (`MissingVKeyWitnessesUTXOW`)
+and for nothing else. So the fresh key's witness verified, value is conserved,
+and `Fee.min_fee` is what preprod charges. One bit flipped in the signature or
+in the body must add `InvalidWitnessesUTXOW`.
+
 ## Layout
 
 ```
